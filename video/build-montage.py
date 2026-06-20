@@ -187,14 +187,17 @@ def caption_panel_vf(
     )
 
 
-def success_overlay_vf(timer: str, panel_name: str, layout: str) -> str:
+def success_overlay_vf(
+    timer: str, panel_name: str, layout: str, delay: float = 0,
+) -> str:
     x, w = panel(layout, panel_name)
     tx = f"{x}+({w}-text_w)/2"
     t = esc(f"OK {timer}")
+    enable = f":enable='gte(t,{delay})'" if delay > 0 else ""
     return (
-        f"drawbox=x={x}:y=0:w={w}:h=ih:color=0x000000bb:t=fill,"
+        f"drawbox=x={x}:y=0:w={w}:h=ih:color=0x000000bb:t=fill{enable},"
         f"drawtext=fontfile={FONT}:text='{t}':x={tx}:y=(h-text_h)/2:"
-        f"fontsize=48:fontcolor=0x4ade80"
+        f"fontsize=48:fontcolor=0x4ade80{enable}"
     )
 
 
@@ -229,7 +232,9 @@ def build_extra_vf(seg: dict, static_speed_badge: bool = False) -> str:
     layout = seg.get("layout", "grok_md_opus")
 
     if seg.get("overlay") == "success":
-        under.append(success_overlay_vf(seg["timer"], seg["panel"], layout))
+        under.append(success_overlay_vf(
+            seg["timer"], seg["panel"], layout, seg.get("overlay_delay", 0),
+        ))
     elif seg.get("overlay") == "fail":
         under.append(fail_overlay_vf(layout, seg.get("panel", "opus")))
     elif seg.get("overlay") == "reset":
@@ -255,13 +260,19 @@ def build_extra_vf(seg: dict, static_speed_badge: bool = False) -> str:
         under.append(speed_badge_vf(seg["speed"]))
 
     if seg.get("caption") and seg.get("overlay") != "reset":
-        dur = seg.get("out", seg["t"]) - 0.3
+        out_dur = seg.get("out", seg["t"])
+        cap_start = (
+            max(0.3, seg.get("overlay_delay", 0.3))
+            if seg.get("overlay") == "success"
+            else 0.3
+        )
+        cap_dur = max(out_dur - cap_start - 0.2, 1.5)
         if seg.get("caption_panel"):
             captions.append(caption_panel_vf(
-                seg["caption"], layout, seg["caption_panel"], 0.3, max(dur, 2),
+                seg["caption"], layout, seg["caption_panel"], cap_start, cap_dur,
             ))
         else:
-            captions.append(caption_vf(seg["caption"], 0.3, max(dur, 2)))
+            captions.append(caption_vf(seg["caption"], cap_start, cap_dur))
 
     return ",".join(under + captions)
 
