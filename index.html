@@ -229,12 +229,15 @@
       margin-bottom: 2rem;
     }
 
-    .video-wrap iframe {
+    .video-wrap iframe,
+    .video-wrap video {
       position: absolute;
       inset: 0;
       width: 100%;
       height: 100%;
       border: 0;
+      object-fit: contain;
+      background: #000;
     }
 
     .video-placeholder {
@@ -425,7 +428,10 @@
     </section>
 
     <section class="video-wrap" id="video-section">
-      <div class="video-placeholder" id="video-placeholder">
+      <video id="recap-video" controls playsinline preload="metadata" poster="">
+        <source src="/out/tetris-comparison.mp4" type="video/mp4">
+      </video>
+      <div class="video-placeholder hidden" id="video-placeholder">
         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
         <p data-i18n="fr"><strong>Vidéo récap à venir</strong><br>L'URL YouTube sera ajoutée ici.</p>
         <p data-i18n="en"><strong>Recap video coming soon</strong><br>The YouTube URL will be embedded here.</p>
@@ -637,8 +643,10 @@
       if (YOUTUBE_ID) {
         var iframe = document.getElementById('youtube-embed');
         var placeholder = document.getElementById('video-placeholder');
+        var recap = document.getElementById('recap-video');
         iframe.src = 'https://www.youtube-nocookie.com/embed/' + YOUTUBE_ID;
         iframe.classList.remove('hidden');
+        if (recap) recap.classList.add('hidden');
         placeholder.classList.add('hidden');
       }
     })();

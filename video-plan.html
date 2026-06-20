@@ -313,11 +313,11 @@
     </table>
 
     <div class="card" style="border-color:var(--success)">
-      <strong>✓ Repères validés</strong> — timestamps fournis le 20 juin 2026. Prochaine étape : choix d'animations ci-dessous, puis génération via roxabi-production.
+      <strong>✓ Montage généré</strong> — choix validés le 20 juin 2026. Vidéo : <a href="/out/tetris-comparison.mp4">out/tetris-comparison.mp4</a> (~2 min).
     </div>
 
-    <h2>Choix d'animations — clique pour sélectionner</h2>
-    <p class="meta" style="margin-bottom:1rem">Tes sélections sont sauvegardées localement. Dis-moi les IDs (ex. « succès B, échec C »).</p>
+    <h2>Choix d'animations — validés</h2>
+    <p class="meta" style="margin-bottom:1rem">Succès A · Échec B · Minuteur A · Carte 35min B · Intro &amp; outro B</p>
 
     <h3>Animation « succès » (Grok / Sonnet terminé)</h3>
     <div class="choices" data-group="success">
@@ -352,7 +352,7 @@
 
     <h3>Animation « échec / stall » (Opus stoppé, Sonnet bug)</h3>
     <div class="choices" data-group="fail">
-      <div class="choice selected" data-id="fail-a" data-group="fail">
+      <div class="choice" data-id="fail-a" data-group="fail">
         <div class="preview-box fail-a">
           <div class="panel grok done">Grok</div>
           <div class="panel opus fail"><span class="timer">12:45</span>Opus</div>
@@ -361,7 +361,7 @@
         <h4>A — Overlay rouge « Arrêté »</h4>
         <p>Icône stop + texte court. Clair et direct.</p>
       </div>
-      <div class="choice" data-id="fail-b" data-group="fail">
+      <div class="choice selected" data-id="fail-b" data-group="fail">
         <div class="preview-box fail-b">
           <div class="panel grok done">Grok</div>
           <div class="panel opus fail"><span class="timer">12:45</span>Opus</div>
@@ -399,11 +399,11 @@
 
     <h3>Carte « 35 min plus tard… »</h3>
     <div class="choices" data-group="ellipsis">
-      <div class="choice selected" data-id="ellipsis-a" data-group="ellipsis">
+      <div class="choice" data-id="ellipsis-a" data-group="ellipsis">
         <h4>A — Texte simple fond noir</h4>
         <p>« 35 min plus tard… » fade in/out. Classique, efficace.</p>
       </div>
-      <div class="choice" data-id="ellipsis-b" data-group="ellipsis">
+      <div class="choice selected" data-id="ellipsis-b" data-group="ellipsis">
         <h4>B — Compteur accéléré</h4>
         <p>Timer qui défile de 12:00 à 47:00 en 2 secondes. Montre l'échelle du temps.</p>
       </div>
@@ -415,11 +415,11 @@
 
     <h3>Intro & outro (roxabi-production)</h3>
     <div class="choices" data-group="intro">
-      <div class="choice selected" data-id="intro-a" data-group="intro">
+      <div class="choice" data-id="intro-a" data-group="intro">
         <h4>A — Minimal Roxabi</h4>
         <p>Fond sombre, typo system, accent bleu. Cohérent avec tetris.roxabi.dev.</p>
       </div>
-      <div class="choice" data-id="intro-b" data-group="intro">
+      <div class="choice selected" data-id="intro-b" data-group="intro">
         <h4>B — Rétro Tetris</h4>
         <p>Pixel art, blocs qui tombent, nostalgia gaming. Plus fun, moins corporate.</p>
       </div>
@@ -431,14 +431,14 @@
 
     <div class="card" id="selection-summary" style="margin-top:2rem">
       <strong>Ta sélection actuelle :</strong>
-      <p id="summary-text" style="margin-top:.5rem;font-family:var(--mono);font-size:.85rem">success-a · fail-a · timer-a · ellipsis-a · intro-a</p>
-      <p class="note" style="margin-top:.5rem">Copie-colle ce résumé dans ta réponse pour valider, ou modifie en cliquant ci-dessus.</p>
+      <p id="summary-text" style="margin-top:.5rem;font-family:var(--mono);font-size:.85rem">success-a · fail-b · timer-a · ellipsis-b · intro-b</p>
+      <p class="note" style="margin-top:.5rem">Choix verrouillés — montage généré avec ces paramètres.</p>
     </div>
   </div>
 
   <script>
     var STORAGE = 'tetris-video-choices';
-    var defaults = { success: 'success-a', fail: 'fail-a', timer: 'timer-a', ellipsis: 'ellipsis-a', intro: 'intro-a' };
+    var defaults = { success: 'success-a', fail: 'fail-b', timer: 'timer-a', ellipsis: 'ellipsis-b', intro: 'intro-b' };
     var saved = {};
     try { saved = JSON.parse(localStorage.getItem(STORAGE) || '{}'); } catch (e) {}
     var choices = Object.assign({}, defaults, saved);
