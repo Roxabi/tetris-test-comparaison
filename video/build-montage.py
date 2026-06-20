@@ -15,12 +15,30 @@ TMP = OUT / "_tmp"
 FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 FONT_MONO = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf"
 
-# roxabi-production delivery presets — yuv444p for crisp UI text (Chrome/Firefox),
-# yuv420p compat for Safari/iOS (High 4:4:4 breaks hardware decode there).
 COLOR_ARGS = [
     "-colorspace", "bt709", "-color_primaries", "bt709",
     "-color_trc", "bt709", "-color_range", "tv",
 ]
+
+# Panel x-offset and width (px) per layout — source is 2560x1440, 3 or 4 equal columns.
+LAYOUTS: dict[str, dict[str, tuple[int, int]]] = {
+    "grok_md_opus": {
+        "grok": (0, 640),
+        "prompt": (640, 640),
+        "opus": (1280, 640),
+    },
+    "grok_md_opus_sonnet": {
+        "grok": (0, 480),
+        "prompt": (480, 480),
+        "opus": (960, 480),
+        "sonnet": (1440, 480),
+    },
+    "grok_opus_sonnet": {
+        "grok": (0, 640),
+        "opus": (640, 640),
+        "sonnet": (1280, 640),
+    },
+}
 
 
 def run(cmd: list[str], **kw) -> None:
@@ -31,6 +49,13 @@ def run(cmd: list[str], **kw) -> None:
 def esc(text: str) -> str:
     text = text.replace("→", "-").replace("·", "-").replace("≠", "!=")
     return text.replace("\\", "\\\\").replace(":", "\\:").replace("'", "")
+
+
+def panel(layout: str, name: str) -> tuple[int, int]:
+    zones = LAYOUTS[layout]
+    if name not in zones:
+        raise KeyError(f"panel {name!r} not in layout {layout!r}")
+    return zones[name]
 
 
 def scale_vf(extra: str = "") -> str:
@@ -51,13 +76,38 @@ def x264_args(crf: int, pix_fmt: str, faststart: bool = False) -> list[str]:
     return args
 
 
-def panel_timer_vf(start: float, label: str, x: str) -> str:
-    """Corner timer style A for one panel third."""
+def speed_badge_vf(multiplier: float, start: float = 0) -> str:
+    label = f"x{int(multiplier)}" if multiplier >= 10 else f"x{multiplier:.1f}"
     t = esc(label)
     return (
-        f"drawtext=fontfile={FONT_MONO}:text='{t}':x={x}:y=24:"
-        f"fontsize=28:fontcolor=white:box=1:boxcolor=0x00000099:boxborderw=8:"
+        f"drawtext=fontfile={FONT_MONO}:text='{t}':x=w-150:y=24:"
+        f"fontsize=38:fontcolor=0xf97316:box=1:boxcolor=0x000000cc:boxborderw=10:"
         f"enable='gte(t,{start})'"
+    )
+
+
+def panel_timer_vf(layout: str, panel_name: str, label: str, start: float = 0) -> str:
+    x, w = panel(layout, panel_name)
+    t = esc(label)
+    tx = x + w // 2 - 40
+    return (
+        f"drawtext=fontfile={FONT_MONO}:text='{t}':x={tx}:y=24:"
+        f"fontsize=26:fontcolor=white:box=1:boxcolor=0x00000099:boxborderw=8:"
+        f"enable='gte(t,{start})'"
+    )
+
+
+def opus_elapsed_timer_vf(layout: str, start_sec: float, speed_mult: float) -> str:
+    """Accelerated Opus clock — counts source-time while footage is sped up."""
+    x, w = panel(layout, "opus")
+    tx = x + w // 2 - 50
+    total = f"{start_sec}+t*{speed_mult}"
+    return (
+        f"drawtext=fontfile={FONT_MONO}:"
+        f"text='Opus %{{eif\\:floor(({total})/60)\\:d}}\\:"
+        f"%{{eif\\:mod(floor({total}),60)\\:d\\:2}}':"
+        f"x={tx}:y=24:fontsize=30:fontcolor=white:"
+        f"box=1:boxcolor=0xa855f7cc:boxborderw=8"
     )
 
 
@@ -71,34 +121,84 @@ def caption_vf(text: str, start: float = 0.5, duration: float = 4) -> str:
     )
 
 
-def success_overlay_vf(timer: str, panel: str) -> str:
-    """Success A: dark overlay + check + time on one panel."""
-    zones = {
-        "grok": ("0", "640", "240"),
-        "opus": ("640", "640", "800"),
-        "sonnet": ("1280", "640", "1360"),
-    }
-    x, w, tx = zones.get(panel, zones["grok"])
+def success_overlay_vf(timer: str, panel_name: str, layout: str) -> str:
+    x, w = panel(layout, panel_name)
+    tx = f"{x}+({w}-text_w)/2"
     t = esc(f"OK {timer}")
     return (
         f"drawbox=x={x}:y=0:w={w}:h=ih:color=0x000000bb:t=fill,"
         f"drawtext=fontfile={FONT}:text='{t}':x={tx}:y=(h-text_h)/2:"
-        f"fontsize=52:fontcolor=0x4ade80"
+        f"fontsize=48:fontcolor=0x4ade80"
     )
 
 
-def fail_overlay_vf() -> str:
-    """Fail B: STALL full screen on center panel (Opus)."""
+def fail_overlay_vf(layout: str, panel_name: str = "opus") -> str:
+    x, w = panel(layout, panel_name)
+    tx = f"{x}+({w}-text_w)/2"
     return (
-        "drawbox=x=640:y=0:w=640:h=ih:color=0x000000cc:t=fill,"
-        f"drawtext=fontfile={FONT}:text='STALL':x=(w-text_w)/2:y=(h-text_h)/2:"
-        "fontsize=72:fontcolor=0xf87171"
+        f"drawbox=x={x}:y=0:w={w}:h=ih:color=0x000000cc:t=fill,"
+        f"drawtext=fontfile={FONT}:text='STALL':x={tx}:y=(h-text_h)/2:"
+        f"fontsize=56:fontcolor=0xf87171"
     )
 
 
-def extract_segment(src: Path, ss: float, t: float, out: Path, out_dur: float, extra_vf: str = "") -> None:
+def tetris_labels_vf(layout: str) -> str:
+    labels = {"grok": "Grok", "opus": "Opus", "sonnet": "Sonnet"}
+    parts = []
+    for panel_name, name in labels.items():
+        if panel_name not in LAYOUTS[layout]:
+            continue
+        x, w = panel(layout, panel_name)
+        parts.append(
+            f"drawtext=fontfile={FONT}:text='{esc(name)}':x={x + 16}:y=h-56:"
+            f"fontsize=30:fontcolor=white:box=1:boxcolor=0x000000bb:boxborderw=10"
+        )
+    return ",".join(parts)
+
+
+def build_extra_vf(seg: dict) -> str:
+    extra: list[str] = []
+    layout = seg.get("layout", "grok_md_opus")
+
+    if seg.get("caption"):
+        dur = seg.get("out", seg["t"]) - 0.3
+        extra.append(caption_vf(seg["caption"], 0.3, max(dur, 2)))
+
+    if seg.get("overlay") == "success":
+        extra.append(success_overlay_vf(seg["timer"], seg["panel"], layout))
+    elif seg.get("overlay") == "fail":
+        extra.append(fail_overlay_vf(layout, seg.get("panel", "opus")))
+    elif seg.get("overlay") == "reset":
+        extra.append(caption_vf(seg.get("caption", "Reset"), 0.2, seg.get("out", 5) - 0.2))
+
+    if seg.get("speed"):
+        extra.append(speed_badge_vf(seg["speed"]))
+
+    if seg.get("opus_timer"):
+        extra.append(opus_elapsed_timer_vf(
+            layout, seg["opus_timer"]["start"], seg["opus_timer"]["mult"],
+        ))
+
+    if seg.get("timers"):
+        if "grok" in LAYOUTS[layout]:
+            extra.append(panel_timer_vf(layout, "grok", "Grok"))
+        if "opus" in LAYOUTS[layout]:
+            extra.append(panel_timer_vf(layout, "opus", "Opus"))
+        if "sonnet" in LAYOUTS[layout]:
+            extra.append(panel_timer_vf(layout, "sonnet", "Sonnet"))
+
+    if seg.get("tetris_labels"):
+        extra.append(tetris_labels_vf(layout))
+
+    return ",".join(extra)
+
+
+def extract_segment(
+    src: Path, ss: float, t: float, out: Path, out_dur: float, extra_vf: str = "",
+) -> None:
     speed = t / out_dur
-    vf = scale_vf(f"setpts=PTS/{speed},{extra_vf}" if extra_vf else f"setpts=PTS/{speed}")
+    pts = f"setpts=PTS/{speed}"
+    vf = scale_vf(f"{pts},{extra_vf}" if extra_vf else pts)
     run([
         "ffmpeg", "-y", "-ss", str(ss), "-i", str(src), "-t", str(t),
         "-vf", vf, "-an", "-t", str(out_dur),
@@ -114,43 +214,68 @@ def extract_segment_1x(src: Path, ss: float, t: float, out: Path, extra_vf: str 
     ])
 
 
-def make_intro(out: Path, duration: int = 12) -> None:
-    """Intro B: retro tetris pixel style."""
-    vf = (
-        f"drawbox=x=200:y=200:w=40:h=40:color=0x00f0f0:t=fill,"
-        f"drawbox=x=240:y=200:w=40:h=40:color=0x00f0f0:t=fill,"
-        f"drawbox=x=280:y=200:w=40:h=40:color=0x00f0f0:t=fill,"
-        f"drawbox=x=320:y=200:w=40:h=40:color=0x00f0f0:t=fill,"
-        f"drawbox=x=880:y=320:w=40:h=40:color=0xf0f000:t=fill,"
-        f"drawbox=x=920:y=320:w=40:h=40:color=0xf0f000:t=fill,"
-        f"drawbox=x=880:y=360:w=40:h=40:color=0xf0f000:t=fill,"
-        f"drawbox=x=920:y=360:w=40:h=40:color=0xf0f000:t=fill,"
-        f"drawbox=x=1400:y=440+20*sin(2*PI*t):w=40:h=40:color=0xa000f0:t=fill,"
-        f"drawtext=fontfile={FONT}:text='TETRIS HTML':x=(w-text_w)/2:y=120:fontsize=72:fontcolor=0xf0f0f0,"
-        f"drawtext=fontfile={FONT}:text='meme brief - 3 IA':x=(w-text_w)/2:y=200:fontsize=36:fontcolor=0x8b95a8,"
-        f"drawtext=fontfile={FONT_MONO}:text='Grok vs Opus vs Sonnet':x=(w-text_w)/2:y=h-100:fontsize=28:fontcolor=0xf97316"
-    )
+def extract_speed_ramp(src: Path, parts: list[dict], out: Path, layout: str) -> None:
+    """Multi-part segment with increasing speed + cumulative Opus timer."""
+    temps: list[Path] = []
+    for i, part in enumerate(parts):
+        mult = part["t"] / part["out"]
+        vf_parts = [speed_badge_vf(mult)]
+        if part.get("opus_timer", True):
+            vf_parts.append(opus_elapsed_timer_vf(layout, part["timer_start"], mult))
+        if part.get("caption"):
+            vf_parts.append(caption_vf(part["caption"], 0.2, part["out"] - 0.3))
+        vf = scale_vf(f"setpts=PTS/{mult}," + ",".join(vf_parts))
+        tmp = TMP / f"_ramp_{out.stem}_{i}.mp4"
+        run([
+            "ffmpeg", "-y", "-ss", str(part["ss"]), "-i", str(src), "-t", str(part["t"]),
+            "-vf", vf, "-an", "-t", str(part["out"]),
+            *x264_args(20, "yuv420p"), str(tmp),
+        ])
+        temps.append(tmp)
+
+    list_file = TMP / f"_ramp_{out.stem}.txt"
+    list_file.write_text("\n".join(f"file '{p}'" for p in temps))
+    run([
+        "ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(list_file),
+        "-an", "-c", "copy", str(out),
+    ])
+
+
+def make_intro(out: Path, duration: int = 6) -> None:
+    """Animated intro — 5-7s with motion + staggered copy."""
+    d = duration
+    vf = ",".join([
+        f"drawbox=x=180+40*sin(2*PI*t/1.2):y=380+20*cos(2*PI*t):w=44:h=44:color=0x00f0f0:t=fill",
+        f"drawbox=x=260+40*sin(2*PI*t/1.5+1):y=420+20*sin(2*PI*t):w=44:h=44:color=0x00f0f0:t=fill",
+        f"drawbox=x=340+40*cos(2*PI*t/1.1):y=360+30*sin(2*PI*t/0.9):w=44:h=44:color=0x00f0f0:t=fill",
+        f"drawbox=x=1500+35*sin(2*PI*t/1.3):y=500+25*cos(2*PI*t):w=44:h=44:color=0xf0f000:t=fill",
+        f"drawbox=x=1580+35*cos(2*PI*t):y=540+25*sin(2*PI*t/1.4):w=44:h=44:color=0xf0f000:t=fill",
+        f"drawbox=x=900+50*sin(2*PI*t/0.8):y=300+40*cos(2*PI*t/1.6):w=44:h=44:color=0xa000f0:t=fill",
+        (
+            f"drawtext=fontfile={FONT}:text='TETRIS HTML':x=(w-text_w)/2:y=140:"
+            f"fontsize=80:fontcolor=0xf0f0f0:enable='between(t,0.15,{d})'"
+        ),
+        (
+            f"drawtext=fontfile={FONT}:text='Meme brief - 4 modeles':x=(w-text_w)/2:y=230:"
+            f"fontsize=38:fontcolor=0x8b95a8:enable='between(t,0.6,{d})'"
+        ),
+        (
+            f"drawtext=fontfile={FONT_MONO}:text='Grok - Opus - Sonnet':x=(w-text_w)/2:y=290:"
+            f"fontsize=32:fontcolor=0xf97316:enable='between(t,1.1,{d})'"
+        ),
+        (
+            f"drawtext=fontfile={FONT_MONO}:text='Qui livre le plus vite ?':x=(w-text_w)/2:y=h-120:"
+            f"fontsize=30:fontcolor=0x5b8def:enable='between(t,1.8,{d})'"
+        ),
+        f"drawbox=x=360:y=h-70:w=min(1200\\,t*200):h=5:color=0xf97316:t=fill",
+    ])
     run([
         "ffmpeg", "-y", "-f", "lavfi", "-i", f"color=c=0x0c1020:s=1920x1080:d={duration}:r=30",
         "-vf", vf, "-an", *x264_args(20, "yuv420p"), str(out),
     ])
 
 
-def make_ellipsis(out: Path, duration: int = 5) -> None:
-    """Ellipsis B: accelerated timer 11:50 to 44:20."""
-    vf = (
-        "drawtext=fontfile=" + FONT + ":text='Pendant ce temps, Opus tourne encore...':x=(w-text_w)/2:y=h/2-80:fontsize=40:fontcolor=white,"
-        "drawtext=fontfile=" + FONT_MONO + ":text='11:50':x=(w-text_w)/2-120:y=h/2+10:fontsize=56:fontcolor=0x8b95a8,"
-        "drawtext=fontfile=" + FONT_MONO + ":text='44:20':x=(w-text_w)/2+120:y=h/2+10:fontsize=56:fontcolor=0xa855f7,"
-        "drawtext=fontfile=" + FONT + ":text='>>':x=(w-text_w)/2:y=h/2+20:fontsize=48:fontcolor=0xa855f7"
-    )
-    run([
-        "ffmpeg", "-y", "-f", "lavfi", "-i", f"color=c=0x0c1020:s=1920x1080:d={duration}:r=30",
-        "-vf", vf, "-an", *x264_args(20, "yuv420p"), str(out),
-    ])
-
-
-def make_outro(out: Path, duration: int = 12) -> None:
+def make_outro(out: Path, duration: int = 10) -> None:
     lines = [
         ("Grok - 2 min - minimal, efficace", "0xf97316", 40),
         ("Sonnet - 2:10 - rapide, bon resultat", "0x22c55e", 40),
@@ -163,7 +288,7 @@ def make_outro(out: Path, duration: int = 12) -> None:
         y = 280 + i * 72
         vf_parts.append(
             f"drawtext=fontfile={FONT}:text='{esc(line)}':x=(w-text_w)/2:y={y}:"
-            f"fontsize={size}:fontcolor={color}:enable='gte(t,{0.4 + i * 0.6})'"
+            f"fontsize={size}:fontcolor={color}:enable='gte(t,{0.3 + i * 0.5})'"
         )
     run([
         "ffmpeg", "-y", "-f", "lavfi", "-i", f"color=c=0x0c1020:s=1920x1080:d={duration}:r=30",
@@ -181,7 +306,6 @@ def concat(parts: list[Path], out: Path) -> None:
 
 
 def export_distribution(master: Path, hq: Path, compat: Path) -> None:
-    """Master (yuv420p segments) → HQ yuv444p + Safari-safe yuv420p compat."""
     run([
         "ffmpeg", "-y", "-i", str(master),
         "-an", *x264_args(18, "yuv444p", faststart=True), str(hq),
@@ -190,6 +314,19 @@ def export_distribution(master: Path, hq: Path, compat: Path) -> None:
         "ffmpeg", "-y", "-i", str(master),
         "-an", *x264_args(23, "yuv420p", faststart=True), str(compat),
     ])
+
+
+def process_segment(src: Path, seg: dict, out: Path) -> None:
+    if seg.get("type") == "speed_ramp":
+        extract_speed_ramp(src, seg["parts"], out, seg.get("layout", "grok_opus_sonnet"))
+        return
+
+    extra = build_extra_vf(seg)
+    out_dur = seg.get("out", seg["t"])
+    if abs(seg["t"] - out_dur) < 0.5:
+        extract_segment_1x(src, seg["ss"], seg["t"], out, extra)
+    else:
+        extract_segment(src, seg["ss"], seg["t"], out, out_dur, extra)
 
 
 def main() -> int:
@@ -212,36 +349,14 @@ def main() -> int:
         if seg.get("type") == "generated":
             if sid == "intro":
                 make_intro(out, seg["duration"])
-            elif sid == "ellipsis":
-                make_ellipsis(out, seg["duration"])
             elif sid == "outro":
                 make_outro(out, seg["duration"])
             else:
-                raise ValueError(sid)
+                raise ValueError(f"unknown generated segment: {sid}")
             parts.append(out)
             continue
 
-        extra = []
-        if seg.get("caption"):
-            extra.append(caption_vf(seg["caption"]))
-        if seg.get("overlay") == "success":
-            extra.append(success_overlay_vf(seg["timer"], seg["panel"]))
-        elif seg.get("overlay") == "fail":
-            extra.append(fail_overlay_vf())
-        elif seg.get("overlay") == "reset":
-            extra.append(caption_vf(seg.get("caption", "Reset"), 0.2, seg.get("out", 5) - 0.2))
-        if seg.get("timers"):
-            extra.extend([
-                panel_timer_vf(0, "Grok", "500"),
-                panel_timer_vf(0, "Opus", "1180"),
-            ])
-
-        vf = ",".join(extra)
-        out_dur = seg.get("out", seg["t"])
-        if abs(seg["t"] - out_dur) < 0.5:
-            extract_segment_1x(src, seg["ss"], seg["t"], out, vf)
-        else:
-            extract_segment(src, seg["ss"], seg["t"], out, out_dur, vf)
+        process_segment(src, seg, out)
         parts.append(out)
 
     master = TMP / "master.mp4"

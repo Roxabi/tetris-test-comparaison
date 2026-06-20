@@ -9,22 +9,160 @@
     "success": "success-a",
     "fail": "fail-b",
     "timer": "timer-a",
-    "ellipsis": "ellipsis-b",
-    "intro": "intro-b"
+    "ellipsis": "opus-accel-ramp",
+    "intro": "intro-b-animated"
   },
   "segments": [
-    { "id": "intro", "type": "generated", "duration": 12 },
-    { "id": "brief", "ss": 0, "t": 30, "out": 13, "label": "Le brief" },
-    { "id": "race", "ss": 30, "t": 160, "out": 25, "timers": true },
-    { "id": "grok_done", "ss": 180, "t": 15, "out": 8, "overlay": "success", "timer": "2:00", "panel": "grok" },
-    { "id": "sonnet_open", "ss": 218, "t": 12, "out": 6, "caption": "Opus bloque - lancement Sonnet" },
-    { "id": "reset_opus", "ss": 330, "t": 12, "out": 5, "caption": "Reset Opus - on recommence a zero", "overlay": "reset" },
-    { "id": "stop_sonnet", "ss": 570, "t": 12, "out": 5, "overlay": "fail", "caption": "Bug - stop pour reprendre" },
-    { "id": "sonnet_done", "ss": 705, "t": 12, "out": 6, "overlay": "success", "timer": "2:10", "panel": "sonnet" },
-    { "id": "ellipsis", "type": "generated", "duration": 5 },
-    { "id": "opus_fin", "ss": 2655, "t": 12, "out": 5, "caption": "Workflow termine - finalisation" },
-    { "id": "opus_done", "ss": 3025, "t": 12, "out": 7, "overlay": "success", "timer": "50:30", "panel": "opus" },
-    { "id": "showcase", "ss": 3535, "t": 12, "out": 12 },
-    { "id": "outro", "type": "generated", "duration": 12 }
+    { "id": "intro", "type": "generated", "duration": 6 },
+
+    {
+      "id": "brief",
+      "ss": 0,
+      "t": 25,
+      "out": 10,
+      "layout": "grok_md_opus",
+      "caption": "Le brief - meme prompt pour les 3 IA"
+    },
+
+    {
+      "id": "race_accel",
+      "ss": 25,
+      "t": 165,
+      "out": 5,
+      "layout": "grok_md_opus",
+      "speed": 33,
+      "timers": true,
+      "caption": "Course - Grok en tete"
+    },
+
+    {
+      "id": "grok_done",
+      "ss": 185,
+      "t": 10,
+      "out": 6,
+      "layout": "grok_md_opus",
+      "overlay": "success",
+      "timer": "2:00",
+      "panel": "grok",
+      "caption": "Grok termine en 2 min"
+    },
+
+    {
+      "id": "stall",
+      "ss": 212,
+      "t": 6,
+      "out": 4,
+      "layout": "grok_md_opus",
+      "overlay": "fail",
+      "panel": "opus",
+      "caption": "Opus bloque..."
+    },
+
+    {
+      "id": "sonnet_open",
+      "ss": 218,
+      "t": 10,
+      "out": 5,
+      "layout": "grok_md_opus_sonnet",
+      "overlay": "fail",
+      "panel": "opus",
+      "caption": "Lancement Sonnet - 4 fenetres"
+    },
+
+    {
+      "id": "phase_four",
+      "ss": 228,
+      "t": 100,
+      "out": 6,
+      "layout": "grok_md_opus_sonnet",
+      "speed": 17,
+      "timers": true
+    },
+
+    {
+      "id": "reset_opus",
+      "ss": 330,
+      "t": 12,
+      "out": 5,
+      "layout": "grok_md_opus_sonnet",
+      "caption": "Reset Opus - on recommence a zero",
+      "overlay": "reset"
+    },
+
+    {
+      "id": "to_three",
+      "ss": 400,
+      "t": 15,
+      "out": 5,
+      "layout": "grok_opus_sonnet",
+      "caption": "Prompt ferme - focus 3 Tetris",
+      "timers": true
+    },
+
+    {
+      "id": "stop_sonnet",
+      "ss": 570,
+      "t": 12,
+      "out": 5,
+      "layout": "grok_opus_sonnet",
+      "caption": "Bug Sonnet - stop pour reprendre"
+    },
+
+    {
+      "id": "sonnet_done",
+      "ss": 705,
+      "t": 12,
+      "out": 6,
+      "layout": "grok_opus_sonnet",
+      "overlay": "success",
+      "timer": "2:10",
+      "panel": "sonnet",
+      "caption": "Sonnet termine en 2:10"
+    },
+
+    {
+      "id": "opus_accel",
+      "type": "speed_ramp",
+      "layout": "grok_opus_sonnet",
+      "parts": [
+        { "ss": 710, "t": 480, "out": 5, "timer_start": 710, "caption": "Opus continue..." },
+        { "ss": 1190, "t": 540, "out": 4, "timer_start": 1190 },
+        { "ss": 1730, "t": 540, "out": 3.5, "timer_start": 1730 },
+        { "ss": 2270, "t": 390, "out": 3, "timer_start": 2270, "caption": "Workflow en vue..." }
+      ]
+    },
+
+    {
+      "id": "opus_fin",
+      "ss": 2655,
+      "t": 12,
+      "out": 5,
+      "layout": "grok_opus_sonnet",
+      "caption": "Workflow termine - finalisation"
+    },
+
+    {
+      "id": "opus_done",
+      "ss": 3025,
+      "t": 12,
+      "out": 7,
+      "layout": "grok_opus_sonnet",
+      "overlay": "success",
+      "timer": "50:30",
+      "panel": "opus",
+      "caption": "Opus termine en 50 min"
+    },
+
+    {
+      "id": "showcase",
+      "ss": 3200,
+      "t": 12,
+      "out": 12,
+      "layout": "grok_opus_sonnet",
+      "tetris_labels": true,
+      "caption": "Les 3 Tetris en action"
+    },
+
+    { "id": "outro", "type": "generated", "duration": 10 }
   ]
 }
