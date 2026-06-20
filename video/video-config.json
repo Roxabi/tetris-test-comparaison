@@ -10,7 +10,12 @@
     "fail": "fail-b",
     "timer": "timer-a",
     "ellipsis": "opus-accel-ramp",
-    "intro": "intro-hyperframes-roxabi"
+    "intro": "intro-hyperframes-roxabi",
+    "outro": "outro-hyperframes-roxabi"
+  },
+  "color_grade": {
+    "profile": "moody_dark",
+    "intensity": 0.55
   },
   "segments": [
     { "id": "intro", "type": "generated", "duration": 5 },

@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <link rel="stylesheet" href="../hyperframes-shared.css" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      :root {
+        --bg: #0d1117;
+        --panel: #13191f;
+        --accent: #f0b429;
+        --text: #f0ede6;
+        --text-muted: #9ca3af;
+        --text-dim: #6b7280;
+        --border: #21262d;
+        --grok: #f97316;
+        --opus: #a855f7;
+        --sonnet: #22c55e;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Inter", system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .scene {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 72px 120px 64px;
+      }
+      .meta {
+        font-size: 14px;
+        font-weight: 500;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .meta .dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; }
+      .body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 36px;
+        max-width: 1100px;
+        margin: 0 auto;
+        width: 100%;
+      }
+      .headline {
+        text-align: center;
+        font-weight: 850;
+        font-size: 52px;
+        letter-spacing: -0.03em;
+      }
+      .headline .accent { color: var(--accent); }
+      .results { display: flex; flex-direction: column; gap: 16px; }
+      .row {
+        display: grid;
+        grid-template-columns: 140px 120px 1fr;
+        align-items: center;
+        gap: 24px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 22px 32px;
+      }
+      .row .name { font-size: 34px; font-weight: 850; letter-spacing: -0.03em; }
+      .row .time {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 26px;
+        color: var(--text-muted);
+      }
+      .row .note { font-size: 22px; color: var(--text-muted); }
+      .row.grok .name { color: var(--grok); }
+      .row.sonnet .name { color: var(--sonnet); }
+      .row.opus .name { color: var(--opus); }
+      .punch {
+        text-align: center;
+        font-size: 24px;
+        color: var(--text-dim);
+        max-width: 800px;
+        margin: 0 auto;
+        line-height: 1.45;
+      }
+      .footer {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+      }
+      .slash { font-weight: 900; font-size: 48px; color: var(--accent); }
+      .url {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 28px;
+        color: var(--accent);
+      }
+      .grid-fade {
+        position: absolute;
+        inset: 0;
+        background: repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(33, 38, 45, 0.45) 40px);
+        pointer-events: none;
+        opacity: 0.5;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="6" data-width="1920" data-height="1080">
+      <div class="grid-fade"></div>
+      <div id="scene" class="scene clip" data-start="0" data-duration="6" data-track-index="1">
+        <div class="meta" id="meta">
+          <span class="dot"></span>
+          <span>ROXABI BENCHMARK · RÉSULTATS</span>
+        </div>
+        <div class="body">
+          <h2 class="headline" id="headline">Le <span class="accent">verdict</span></h2>
+          <div class="results" id="results">
+            <div class="row grok" id="r-grok">
+              <span class="name">Grok</span>
+              <span class="time">2:00</span>
+              <span class="note">Minimal, efficace</span>
+            </div>
+            <div class="row sonnet" id="r-sonnet">
+              <span class="name">Sonnet</span>
+              <span class="time">2:10</span>
+              <span class="note">Rapide, bon résultat</span>
+            </div>
+            <div class="row opus" id="r-opus">
+              <span class="name">Opus</span>
+              <span class="time">50:30</span>
+              <span class="note">Over-engineering</span>
+            </div>
+          </div>
+          <p class="punch" id="punch">Opus + Ultra - pas toujours la bonne solution</p>
+        </div>
+        <div class="footer" id="footer">
+          <span class="slash" id="slash">/</span>
+          <span class="url" id="url">tetris.roxabi.dev</span>
+        </div>
+      </div>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true, defaults: { ease: "power2.out" } });
+
+      tl.from("#meta", { autoAlpha: 0, x: -24, duration: 0.4 }, 0.1)
+        .from("#headline", { autoAlpha: 0, y: 20, duration: 0.5 }, 0.35)
+        .from("#r-grok", { autoAlpha: 0, x: -32, duration: 0.45 }, 0.75)
+        .from("#r-sonnet", { autoAlpha: 0, x: -32, duration: 0.45 }, 1.05)
+        .from("#r-opus", { autoAlpha: 0, x: -32, duration: 0.45 }, 1.35)
+        .from("#punch", { autoAlpha: 0, y: 12, duration: 0.4 }, 2.0)
+        .from("#slash", { autoAlpha: 0, rotation: 10, scale: 0.8, duration: 0.45, ease: "back.out(1.5)" }, 2.6)
+        .from("#url", { autoAlpha: 0, y: 8, duration: 0.35 }, 2.9)
+        .to("#scene", { autoAlpha: 0, filter: "blur(6px)", duration: 0.5 }, 5.4);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

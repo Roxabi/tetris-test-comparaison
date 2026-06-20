@@ -13,8 +13,22 @@ PROJECT = ROOT.parent
 OUT = PROJECT / "out"
 TMP = OUT / "_tmp"
 INTRO_HF = ROOT / "intro-hyperframes"
+OUTRO_HF = ROOT / "outro-hyperframes"
 FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 FONT_MONO = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf"
+
+# OpenMontage color_grade profiles — tools/enhancement/color_grade.py
+COLOR_GRADE_PROFILES = {
+    "moody_dark": (
+        "curves=all='0/0.05 0.15/0.12 0.5/0.45 0.85/0.82 1/0.95',"
+        "eq=contrast=1.12:saturation=0.8:brightness=-0.03"
+    ),
+    "cinematic_cool": (
+        "colorbalance=rs=-0.02:gs=-0.03:bs=0.08:rh=0.06:gh=-0.02:bh=-0.06,"
+        "curves=all='0/0.02 0.25/0.20 0.5/0.48 0.75/0.78 1/0.98',"
+        "eq=contrast=1.08:saturation=1.05"
+    ),
+}
 
 # Roxabi v1.5 tokens — ~/.roxabi/production/roxabi-presentation/DESIGN.md
 ROXABI = {
@@ -70,12 +84,34 @@ def panel(layout: str, name: str) -> tuple[int, int]:
     return zones[name]
 
 
-def scale_vf(extra: str = "") -> str:
-    base = (
-        "scale=1920:1080:force_original_aspect_ratio=decrease:flags=lanczos,"
-        "pad=1920:1080:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30"
+def color_grade_vf(profile: str, intensity: float) -> str:
+    chain = COLOR_GRADE_PROFILES.get(profile, COLOR_GRADE_PROFILES["moody_dark"])
+    if intensity >= 0.99:
+        return chain
+    return (
+        f"split[orig][tg];[tg]{chain}[graded];"
+        f"[orig][graded]blend=all_mode=normal:all_opacity={intensity:.2f}"
     )
-    return f"{base},{extra}" if extra else base
+
+
+def build_vf(
+    extra: str = "",
+    speed: float | None = None,
+    grade: dict | None = None,
+) -> str:
+    parts = [
+        "scale=1920:1080:force_original_aspect_ratio=decrease:flags=lanczos",
+        "pad=1920:1080:(ow-iw)/2:(oh-ih)/2",
+        "setsar=1",
+        "fps=30",
+    ]
+    if speed and abs(speed - 1.0) > 0.01:
+        parts.append(f"setpts=PTS/{speed}")
+    if grade:
+        parts.append(color_grade_vf(grade["profile"], grade.get("intensity", 0.55)))
+    if extra:
+        parts.append(extra)
+    return ",".join(parts)
 
 
 def x264_args(crf: int, pix_fmt: str, faststart: bool = False) -> list[str]:
@@ -93,7 +129,7 @@ def speed_badge_vf(multiplier: float, start: float = 0) -> str:
     t = esc(label)
     return (
         f"drawtext=fontfile={FONT_MONO}:text='{t}':x=w-150:y=24:"
-        f"fontsize=38:fontcolor=0xf97316:box=1:boxcolor=0x000000cc:boxborderw=10:"
+        f"fontsize=38:fontcolor={ROXABI['accent']}:box=1:boxcolor=0x000000cc:boxborderw=10:"
         f"enable='gte(t,{start})'"
     )
 
@@ -206,11 +242,11 @@ def build_extra_vf(seg: dict) -> str:
 
 
 def extract_segment(
-    src: Path, ss: float, t: float, out: Path, out_dur: float, extra_vf: str = "",
+    src: Path, ss: float, t: float, out: Path, out_dur: float,
+    extra_vf: str = "", grade: dict | None = None,
 ) -> None:
     speed = t / out_dur
-    pts = f"setpts=PTS/{speed}"
-    vf = scale_vf(f"{pts},{extra_vf}" if extra_vf else pts)
+    vf = build_vf(extra_vf, speed=speed, grade=grade)
     run([
         "ffmpeg", "-y", "-ss", str(ss), "-i", str(src), "-t", str(t),
         "-vf", vf, "-an", "-t", str(out_dur),
@@ -218,15 +254,20 @@ def extract_segment(
     ])
 
 
-def extract_segment_1x(src: Path, ss: float, t: float, out: Path, extra_vf: str = "") -> None:
-    vf = scale_vf(extra_vf)
+def extract_segment_1x(
+    src: Path, ss: float, t: float, out: Path,
+    extra_vf: str = "", grade: dict | None = None,
+) -> None:
+    vf = build_vf(extra_vf, grade=grade)
     run([
         "ffmpeg", "-y", "-ss", str(ss), "-i", str(src), "-t", str(t),
         "-vf", vf, "-an", *x264_args(20, "yuv420p"), str(out),
     ])
 
 
-def extract_speed_ramp(src: Path, parts: list[dict], out: Path, layout: str) -> None:
+def extract_speed_ramp(
+    src: Path, parts: list[dict], out: Path, layout: str, grade: dict | None = None,
+) -> None:
     """Multi-part segment with increasing speed + cumulative Opus timer."""
     temps: list[Path] = []
     for i, part in enumerate(parts):
@@ -236,7 +277,7 @@ def extract_speed_ramp(src: Path, parts: list[dict], out: Path, layout: str) -> 
             vf_parts.append(opus_elapsed_timer_vf(layout, part["timer_start"], mult))
         if part.get("caption"):
             vf_parts.append(caption_vf(part["caption"], 0.2, part["out"] - 0.3))
-        vf = scale_vf(f"setpts=PTS/{mult}," + ",".join(vf_parts))
+        vf = build_vf(",".join(vf_parts), speed=mult, grade=grade)
         tmp = TMP / f"_ramp_{out.stem}_{i}.mp4"
         run([
             "ffmpeg", "-y", "-ss", str(part["ss"]), "-i", str(src), "-t", str(part["t"]),
@@ -253,15 +294,14 @@ def extract_speed_ramp(src: Path, parts: list[dict], out: Path, layout: str) -> 
     ])
 
 
-def make_intro_hyperframes(out: Path, duration: int) -> bool:
-    """Render Roxabi-branded intro via HyperFrames (HTML/GSAP → Puppeteer → FFmpeg)."""
-    index = INTRO_HF / "index.html"
-    if not index.exists():
+def render_hyperframes(hf_dir: Path, out: Path, duration: int, label: str) -> bool:
+    """HyperFrames: HTML/GSAP → Puppeteer → FFmpeg (roxabi-production stack)."""
+    if not (hf_dir / "index.html").exists():
         return False
-    raw = TMP / "intro_hyperframes_raw.mp4"
+    raw = TMP / f"{label}_hyperframes_raw.mp4"
     try:
         run([
-            "npx", "hyperframes", "render", str(INTRO_HF),
+            "npx", "hyperframes", "render", str(hf_dir),
             "-o", str(raw), "-f", "30", "-q", "high", "--crf", "18", "--quiet",
         ])
         run([
@@ -270,7 +310,7 @@ def make_intro_hyperframes(out: Path, duration: int) -> bool:
         ])
         return True
     except subprocess.CalledProcessError as exc:
-        print(f"HyperFrames intro failed ({exc}), using FFmpeg fallback", file=sys.stderr)
+        print(f"HyperFrames {label} failed ({exc}), using FFmpeg fallback", file=sys.stderr)
         return False
 
 
@@ -321,29 +361,51 @@ def make_intro_ffmpeg_fallback(out: Path, duration: int) -> None:
 
 
 def make_intro(out: Path, duration: int = 5) -> None:
-    if not make_intro_hyperframes(out, duration):
+    if not render_hyperframes(INTRO_HF, out, duration, "intro"):
         make_intro_ffmpeg_fallback(out, duration)
 
 
-def make_outro(out: Path, duration: int = 10) -> None:
-    lines = [
-        ("Grok - 2 min - minimal, efficace", "0xf97316", 40),
-        ("Sonnet - 2:10 - rapide, bon resultat", "0x22c55e", 40),
-        ("Opus - 50 min - over-engineering", "0xa855f7", 40),
-        ("Opus + Ultra != toujours la bonne solution", "0x8b95a8", 36),
-        ("tetris.roxabi.dev", "0x5b8def", 52),
+def make_outro_ffmpeg_fallback(out: Path, duration: int) -> None:
+    r = ROXABI
+    rows = [
+        ("Grok", "2:00", "Minimal, efficace", "0xf97316", 0.3),
+        ("Sonnet", "2:10", "Rapide, bon resultat", "0x22c55e", 0.8),
+        ("Opus", "50:30", "Over-engineering", "0xa855f7", 1.3),
     ]
-    vf_parts = []
-    for i, (line, color, size) in enumerate(lines):
-        y = 280 + i * 72
-        vf_parts.append(
-            f"drawtext=fontfile={FONT}:text='{esc(line)}':x=(w-text_w)/2:y={y}:"
-            f"fontsize={size}:fontcolor={color}:enable='gte(t,{0.3 + i * 0.5})'"
+    vf = [
+        f"drawbox=x=0:y=0:w=iw:h=ih:color={r['bg']}:t=fill",
+        (
+            f"drawtext=fontfile={FONT}:text='Le verdict':x=(w-text_w)/2:y=200:"
+            f"fontsize=56:fontcolor={r['text']}:enable='between(t,0.2,{duration})'"
+        ),
+    ]
+    for name, timer, note, color, start in rows:
+        y = 320 + int(start * 80)
+        vf.append(
+            f"drawtext=fontfile={FONT}:text='{esc(name)}  {timer}  {note}':"
+            f"x=(w-text_w)/2:y={y}:fontsize=34:fontcolor={color}:"
+            f"enable='between(t,{start},{duration})'"
         )
-    run([
-        "ffmpeg", "-y", "-f", "lavfi", "-i", f"color=c=0x0c1020:s=1920x1080:d={duration}:r=30",
-        "-vf", ",".join(vf_parts), "-an", *x264_args(20, "yuv420p"), str(out),
+    vf.extend([
+        (
+            f"drawtext=fontfile={FONT}:text='Opus + Ultra != toujours la bonne solution':"
+            f"x=(w-text_w)/2:y=620:fontsize=28:fontcolor={r['dim']}:"
+            f"enable='between(t,2.0,{duration})'"
+        ),
+        (
+            f"drawtext=fontfile={FONT_MONO}:text='tetris.roxabi.dev':x=(w-text_w)/2:y=h-100:"
+            f"fontsize=28:fontcolor={r['accent']}:enable='between(t,2.5,{duration})'"
+        ),
     ])
+    run([
+        "ffmpeg", "-y", "-f", "lavfi", "-i", f"color=c={r['bg']}:s=1920x1080:d={duration}:r=30",
+        "-vf", ",".join(vf), "-an", *x264_args(20, "yuv420p"), str(out),
+    ])
+
+
+def make_outro(out: Path, duration: int = 6) -> None:
+    if not render_hyperframes(OUTRO_HF, out, duration, "outro"):
+        make_outro_ffmpeg_fallback(out, duration)
 
 
 def concat(parts: list[Path], out: Path) -> None:
@@ -366,17 +428,19 @@ def export_distribution(master: Path, hq: Path, compat: Path) -> None:
     ])
 
 
-def process_segment(src: Path, seg: dict, out: Path) -> None:
+def process_segment(src: Path, seg: dict, out: Path, grade: dict | None = None) -> None:
     if seg.get("type") == "speed_ramp":
-        extract_speed_ramp(src, seg["parts"], out, seg.get("layout", "grok_opus_sonnet"))
+        extract_speed_ramp(
+            src, seg["parts"], out, seg.get("layout", "grok_opus_sonnet"), grade=grade,
+        )
         return
 
     extra = build_extra_vf(seg)
     out_dur = seg.get("out", seg["t"])
     if abs(seg["t"] - out_dur) < 0.5:
-        extract_segment_1x(src, seg["ss"], seg["t"], out, extra)
+        extract_segment_1x(src, seg["ss"], seg["t"], out, extra, grade=grade)
     else:
-        extract_segment(src, seg["ss"], seg["t"], out, out_dur, extra)
+        extract_segment(src, seg["ss"], seg["t"], out, out_dur, extra, grade=grade)
 
 
 def main() -> int:
@@ -406,7 +470,8 @@ def main() -> int:
             parts.append(out)
             continue
 
-        process_segment(src, seg, out)
+        grade = cfg.get("color_grade") if not seg.get("no_grade") else None
+        process_segment(src, seg, out, grade=grade)
         parts.append(out)
 
     master = TMP / "master.mp4"
