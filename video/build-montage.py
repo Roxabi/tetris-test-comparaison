@@ -163,6 +163,8 @@ def concat(parts: list[Path], out: Path) -> None:
 def main() -> int:
     cfg = json.loads((ROOT / "video-config.json").read_text())
     src = Path(cfg["source"])
+    if not src.is_absolute():
+        src = PROJECT / src
     if not src.exists():
         print(f"Missing source: {src}", file=sys.stderr)
         return 1
