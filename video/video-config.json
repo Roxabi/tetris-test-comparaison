@@ -13,13 +13,13 @@
     "intro": "intro-b-animated"
   },
   "segments": [
-    { "id": "intro", "type": "generated", "duration": 6 },
+    { "id": "intro", "type": "generated", "duration": 5 },
 
     {
       "id": "brief",
       "ss": 0,
-      "t": 25,
-      "out": 10,
+      "t": 20,
+      "out": 5,
       "layout": "grok_md_opus",
       "caption": "Le brief - meme prompt pour les 3 IA"
     },
@@ -28,9 +28,9 @@
       "id": "race_accel",
       "ss": 25,
       "t": 165,
-      "out": 5,
+      "out": 3,
       "layout": "grok_md_opus",
-      "speed": 33,
+      "speed": 55,
       "timers": true,
       "caption": "Course - Grok en tete"
     },
@@ -38,8 +38,8 @@
     {
       "id": "grok_done",
       "ss": 185,
-      "t": 10,
-      "out": 6,
+      "t": 8,
+      "out": 3,
       "layout": "grok_md_opus",
       "overlay": "success",
       "timer": "2:00",
@@ -50,8 +50,8 @@
     {
       "id": "stall",
       "ss": 212,
-      "t": 6,
-      "out": 4,
+      "t": 5,
+      "out": 2,
       "layout": "grok_md_opus",
       "overlay": "fail",
       "panel": "opus",
@@ -61,8 +61,8 @@
     {
       "id": "sonnet_open",
       "ss": 218,
-      "t": 10,
-      "out": 5,
+      "t": 8,
+      "out": 2,
       "layout": "grok_md_opus_sonnet",
       "overlay": "fail",
       "panel": "opus",
@@ -73,51 +73,51 @@
       "id": "phase_four",
       "ss": 228,
       "t": 100,
-      "out": 6,
+      "out": 3,
       "layout": "grok_md_opus_sonnet",
-      "speed": 17,
+      "speed": 33,
       "timers": true
     },
 
     {
       "id": "reset_opus",
       "ss": 330,
-      "t": 12,
-      "out": 5,
+      "t": 10,
+      "out": 2,
       "layout": "grok_md_opus_sonnet",
-      "caption": "Reset Opus - on recommence a zero",
+      "caption": "Reset Opus",
       "overlay": "reset"
     },
 
     {
       "id": "to_three",
       "ss": 400,
-      "t": 15,
-      "out": 5,
+      "t": 12,
+      "out": 2,
       "layout": "grok_opus_sonnet",
-      "caption": "Prompt ferme - focus 3 Tetris",
+      "caption": "Focus 3 Tetris",
       "timers": true
     },
 
     {
       "id": "stop_sonnet",
       "ss": 570,
-      "t": 12,
-      "out": 5,
+      "t": 10,
+      "out": 2,
       "layout": "grok_opus_sonnet",
-      "caption": "Bug Sonnet - stop pour reprendre"
+      "caption": "Bug Sonnet - stop"
     },
 
     {
       "id": "sonnet_done",
       "ss": 705,
-      "t": 12,
-      "out": 6,
+      "t": 10,
+      "out": 3,
       "layout": "grok_opus_sonnet",
       "overlay": "success",
       "timer": "2:10",
       "panel": "sonnet",
-      "caption": "Sonnet termine en 2:10"
+      "caption": "Sonnet - 2:10"
     },
 
     {
@@ -125,44 +125,44 @@
       "type": "speed_ramp",
       "layout": "grok_opus_sonnet",
       "parts": [
-        { "ss": 710, "t": 480, "out": 5, "timer_start": 710, "caption": "Opus continue..." },
-        { "ss": 1190, "t": 540, "out": 4, "timer_start": 1190 },
-        { "ss": 1730, "t": 540, "out": 3.5, "timer_start": 1730 },
-        { "ss": 2270, "t": 390, "out": 3, "timer_start": 2270, "caption": "Workflow en vue..." }
+        { "ss": 710, "t": 550, "out": 2.5, "timer_start": 710, "caption": "Opus continue..." },
+        { "ss": 1260, "t": 550, "out": 2.5, "timer_start": 1260 },
+        { "ss": 1810, "t": 500, "out": 2.5, "timer_start": 1810 },
+        { "ss": 2310, "t": 350, "out": 2.5, "timer_start": 2310 }
       ]
     },
 
     {
       "id": "opus_fin",
       "ss": 2655,
-      "t": 12,
-      "out": 5,
+      "t": 10,
+      "out": 2,
       "layout": "grok_opus_sonnet",
-      "caption": "Workflow termine - finalisation"
+      "caption": "Workflow termine"
     },
 
     {
       "id": "opus_done",
       "ss": 3025,
-      "t": 12,
-      "out": 7,
+      "t": 10,
+      "out": 4,
       "layout": "grok_opus_sonnet",
       "overlay": "success",
       "timer": "50:30",
       "panel": "opus",
-      "caption": "Opus termine en 50 min"
+      "caption": "Opus - 50 min"
     },
 
     {
       "id": "showcase",
       "ss": 3200,
-      "t": 12,
-      "out": 12,
+      "t": 10,
+      "out": 6,
       "layout": "grok_opus_sonnet",
       "tetris_labels": true,
       "caption": "Les 3 Tetris en action"
     },
 
-    { "id": "outro", "type": "generated", "duration": 10 }
+    { "id": "outro", "type": "generated", "duration": 6 }
   ]
 }
