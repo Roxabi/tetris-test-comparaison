@@ -12,8 +12,20 @@ ROOT = Path(__file__).resolve().parent
 PROJECT = ROOT.parent
 OUT = PROJECT / "out"
 TMP = OUT / "_tmp"
+INTRO_HF = ROOT / "intro-hyperframes"
 FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 FONT_MONO = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf"
+
+# Roxabi v1.5 tokens — ~/.roxabi/production/roxabi-presentation/DESIGN.md
+ROXABI = {
+    "bg": "0x0d1117",
+    "panel": "0x13191f",
+    "accent": "0xf0b429",
+    "text": "0xf0ede6",
+    "muted": "0x9ca3af",
+    "dim": "0x6b7280",
+    "border": "0x21262d",
+}
 
 COLOR_ARGS = [
     "-colorspace", "bt709", "-color_primaries", "bt709",
@@ -241,38 +253,76 @@ def extract_speed_ramp(src: Path, parts: list[dict], out: Path, layout: str) -> 
     ])
 
 
-def make_intro(out: Path, duration: int = 6) -> None:
-    """Animated intro — 5-7s with motion + staggered copy."""
+def make_intro_hyperframes(out: Path, duration: int) -> bool:
+    """Render Roxabi-branded intro via HyperFrames (HTML/GSAP → Puppeteer → FFmpeg)."""
+    index = INTRO_HF / "index.html"
+    if not index.exists():
+        return False
+    raw = TMP / "intro_hyperframes_raw.mp4"
+    try:
+        run([
+            "npx", "hyperframes", "render", str(INTRO_HF),
+            "-o", str(raw), "-f", "30", "-q", "high", "--crf", "18", "--quiet",
+        ])
+        run([
+            "ffmpeg", "-y", "-i", str(raw), "-t", str(duration), "-an",
+            *x264_args(20, "yuv420p"), str(out),
+        ])
+        return True
+    except subprocess.CalledProcessError as exc:
+        print(f"HyperFrames intro failed ({exc}), using FFmpeg fallback", file=sys.stderr)
+        return False
+
+
+def make_intro_ffmpeg_fallback(out: Path, duration: int) -> None:
+    """Roxabi-styled FFmpeg fallback when HyperFrames is unavailable."""
     d = duration
+    r = ROXABI
     vf = ",".join([
-        f"drawbox=x=180+40*sin(2*PI*t/1.2):y=380+20*cos(2*PI*t):w=44:h=44:color=0x00f0f0:t=fill",
-        f"drawbox=x=260+40*sin(2*PI*t/1.5+1):y=420+20*sin(2*PI*t):w=44:h=44:color=0x00f0f0:t=fill",
-        f"drawbox=x=340+40*cos(2*PI*t/1.1):y=360+30*sin(2*PI*t/0.9):w=44:h=44:color=0x00f0f0:t=fill",
-        f"drawbox=x=1500+35*sin(2*PI*t/1.3):y=500+25*cos(2*PI*t):w=44:h=44:color=0xf0f000:t=fill",
-        f"drawbox=x=1580+35*cos(2*PI*t):y=540+25*sin(2*PI*t/1.4):w=44:h=44:color=0xf0f000:t=fill",
-        f"drawbox=x=900+50*sin(2*PI*t/0.8):y=300+40*cos(2*PI*t/1.6):w=44:h=44:color=0xa000f0:t=fill",
+        f"drawbox=x=0:y=0:w=iw:h=ih:color={r['bg']}:t=fill",
         (
-            f"drawtext=fontfile={FONT}:text='TETRIS HTML':x=(w-text_w)/2:y=140:"
-            f"fontsize=80:fontcolor=0xf0f0f0:enable='between(t,0.15,{d})'"
+            f"drawtext=fontfile={FONT_MONO}:text='ROXABI BENCHMARK':x=120:y=72:"
+            f"fontsize=22:fontcolor={r['dim']}:enable='between(t,0.1,{d})'"
         ),
         (
-            f"drawtext=fontfile={FONT}:text='Meme brief - 4 modeles':x=(w-text_w)/2:y=230:"
-            f"fontsize=38:fontcolor=0x8b95a8:enable='between(t,0.6,{d})'"
+            f"drawtext=fontfile={FONT}:text='/':x=120:y=280:"
+            f"fontsize=110:fontcolor={r['accent']}:enable='between(t,0.2,{d})'"
         ),
         (
-            f"drawtext=fontfile={FONT_MONO}:text='Grok - Opus - Sonnet':x=(w-text_w)/2:y=290:"
-            f"fontsize=32:fontcolor=0xf97316:enable='between(t,1.1,{d})'"
+            f"drawtext=fontfile={FONT}:text='Qui livre le plus vite ?':x=220:y=300:"
+            f"fontsize=64:fontcolor={r['text']}:enable='between(t,0.4,{d})'"
         ),
         (
-            f"drawtext=fontfile={FONT_MONO}:text='Qui livre le plus vite ?':x=(w-text_w)/2:y=h-120:"
-            f"fontsize=30:fontcolor=0x5b8def:enable='between(t,1.8,{d})'"
+            f"drawtext=fontfile={FONT}:text='Meme brief - 3 IA':x=220:y=390:"
+            f"fontsize=30:fontcolor={r['muted']}:enable='between(t,0.7,{d})'"
         ),
-        f"drawbox=x=360:y=h-70:w=min(1200\\,t*200):h=5:color=0xf97316:t=fill",
+        (
+            f"drawtext=fontfile={FONT_MONO}:text='Grok':x=120:y=520:"
+            f"fontsize=36:fontcolor=0xf97316:enable='between(t,1.0,{d})'"
+        ),
+        (
+            f"drawtext=fontfile={FONT_MONO}:text='Opus':x=520:y=520:"
+            f"fontsize=36:fontcolor=0xa855f7:enable='between(t,1.2,{d})'"
+        ),
+        (
+            f"drawtext=fontfile={FONT_MONO}:text='Sonnet':x=920:y=520:"
+            f"fontsize=36:fontcolor=0x22c55e:enable='between(t,1.4,{d})'"
+        ),
+        (
+            f"drawtext=fontfile={FONT_MONO}:text='tetris.roxabi.dev':x=120:y=h-80:"
+            f"fontsize=24:fontcolor={r['accent']}:enable='between(t,1.8,{d})'"
+        ),
+        f"drawbox=x=120:y=h-50:w=min(600\\,t*120):h=4:color={r['accent']}:t=fill",
     ])
     run([
-        "ffmpeg", "-y", "-f", "lavfi", "-i", f"color=c=0x0c1020:s=1920x1080:d={duration}:r=30",
+        "ffmpeg", "-y", "-f", "lavfi", "-i", f"color=c={r['bg']}:s=1920x1080:d={duration}:r=30",
         "-vf", vf, "-an", *x264_args(20, "yuv420p"), str(out),
     ])
+
+
+def make_intro(out: Path, duration: int = 5) -> None:
+    if not make_intro_hyperframes(out, duration):
+        make_intro_ffmpeg_fallback(out, duration)
 
 
 def make_outro(out: Path, duration: int = 10) -> None:

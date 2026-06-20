@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;850;900&family=JetBrains+Mono:wght@400;500&display=block"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      :root {
+        --bg: #0d1117;
+        --panel: #13191f;
+        --surface: #161b22;
+        --accent: #f0b429;
+        --text: #f0ede6;
+        --text-muted: #9ca3af;
+        --text-dim: #6b7280;
+        --border: #21262d;
+        --grok: #f97316;
+        --opus: #a855f7;
+        --sonnet: #22c55e;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Inter", system-ui, sans-serif;
+        font-feature-settings: "ss01", "cv11";
+        -webkit-font-smoothing: antialiased;
+      }
+      .scene {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 72px 120px 64px;
+        background: var(--bg);
+      }
+      .meta {
+        font-size: 14px;
+        font-weight: 500;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .meta .dot {
+        width: 8px;
+        height: 8px;
+        background: var(--accent);
+        border-radius: 50%;
+      }
+      .body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 40px;
+        max-width: 1200px;
+      }
+      .hero {
+        display: flex;
+        align-items: center;
+        gap: 28px;
+      }
+      .slash {
+        font-weight: 900;
+        font-size: 120px;
+        line-height: 1;
+        color: var(--accent);
+        letter-spacing: -0.06em;
+        transform-origin: center;
+      }
+      .title-block { display: flex; flex-direction: column; gap: 12px; }
+      .title {
+        font-weight: 850;
+        font-size: 72px;
+        letter-spacing: -0.04em;
+        line-height: 1.05;
+      }
+      .title .accent { color: var(--accent); }
+      .subtitle {
+        font-size: 28px;
+        font-weight: 500;
+        color: var(--text-muted);
+        letter-spacing: -0.01em;
+      }
+      .models {
+        display: flex;
+        gap: 20px;
+      }
+      .model {
+        flex: 1;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 28px 32px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .model .head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .model .name {
+        font-size: 32px;
+        font-weight: 850;
+        letter-spacing: -0.03em;
+      }
+      .model .pulse {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+      }
+      .model.grok .name { color: var(--grok); }
+      .model.grok .pulse { background: var(--grok); }
+      .model.opus .name { color: var(--opus); }
+      .model.opus .pulse { background: var(--opus); }
+      .model.sonnet .name { color: var(--sonnet); }
+      .model.sonnet .pulse { background: var(--sonnet); }
+      .model .role {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 15px;
+        color: var(--text-dim);
+      }
+      .kicker {
+        font-size: 22px;
+        font-weight: 500;
+        color: var(--text-muted);
+        max-width: 900px;
+        line-height: 1.4;
+      }
+      .footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+      }
+      .url {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 20px;
+        color: var(--accent);
+      }
+      .progress-track {
+        flex: 1;
+        max-width: 480px;
+        height: 4px;
+        background: var(--border);
+        border-radius: 2px;
+        overflow: hidden;
+      }
+      .progress-fill {
+        height: 100%;
+        width: 0%;
+        background: var(--accent);
+        border-radius: 2px;
+      }
+      .grid-fade {
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(90deg, transparent 0%, rgba(240, 180, 41, 0.03) 50%, transparent 100%),
+          repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(33, 38, 45, 0.5) 40px);
+        pointer-events: none;
+        opacity: 0.6;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="5"
+      data-width="1920"
+      data-height="1080"
+    >
+      <div class="grid-fade"></div>
+      <div id="scene" class="scene clip" data-start="0" data-duration="5" data-track-index="1">
+        <div class="meta" id="meta">
+          <span class="dot"></span>
+          <span>ROXABI BENCHMARK · TETRIS HTML</span>
+        </div>
+        <div class="body">
+          <div class="hero">
+            <div class="slash" id="slash">/</div>
+            <div class="title-block">
+              <h1 class="title" id="title">
+                Qui livre le <span class="accent">plus vite</span> ?
+              </h1>
+              <p class="subtitle" id="subtitle">Même brief · 3 IA · 1 fichier HTML</p>
+            </div>
+          </div>
+          <div class="models" id="models">
+            <div class="model grok" id="m-grok">
+              <div class="head">
+                <span class="name">Grok</span>
+                <span class="pulse"></span>
+              </div>
+              <span class="role">Composer 2.5</span>
+            </div>
+            <div class="model opus" id="m-opus">
+              <div class="head">
+                <span class="name">Opus</span>
+                <span class="pulse"></span>
+              </div>
+              <span class="role">Claude Ultra</span>
+            </div>
+            <div class="model sonnet" id="m-sonnet">
+              <div class="head">
+                <span class="name">Sonnet</span>
+                <span class="pulse"></span>
+              </div>
+              <span class="role">Claude 4</span>
+            </div>
+          </div>
+          <p class="kicker" id="kicker">
+            Course chronométrée — prompts lancés en parallèle, résultats comparés.
+          </p>
+        </div>
+        <div class="footer">
+          <span class="url" id="url">tetris.roxabi.dev</span>
+          <div class="progress-track"><div class="progress-fill" id="progress"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true, defaults: { ease: "power2.out" } });
+
+      tl.from("#meta", { autoAlpha: 0, x: -24, duration: 0.45 }, 0.15)
+        .from("#slash", { autoAlpha: 0, rotation: 12, scale: 0.7, duration: 0.5, ease: "back.out(1.6)" }, 0.35)
+        .from("#title", { autoAlpha: 0, y: 28, duration: 0.55 }, 0.55)
+        .from("#subtitle", { autoAlpha: 0, y: 16, duration: 0.45 }, 0.85)
+        .from("#m-grok", { autoAlpha: 0, y: 24, duration: 0.45 }, 1.2)
+        .from("#m-opus", { autoAlpha: 0, y: 24, duration: 0.45 }, 1.35)
+        .from("#m-sonnet", { autoAlpha: 0, y: 24, duration: 0.45 }, 1.5)
+        .from("#kicker", { autoAlpha: 0, y: 12, duration: 0.4 }, 1.9)
+        .from("#url", { autoAlpha: 0, y: 8, duration: 0.35 }, 2.1)
+        .to("#progress", { width: "100%", duration: 2.6, ease: "none" }, 2.2)
+        .to("#scene", { autoAlpha: 0, filter: "blur(6px)", duration: 0.5 }, 4.5);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

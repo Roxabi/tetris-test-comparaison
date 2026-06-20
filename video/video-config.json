@@ -10,7 +10,7 @@
     "fail": "fail-b",
     "timer": "timer-a",
     "ellipsis": "opus-accel-ramp",
-    "intro": "intro-b-animated"
+    "intro": "intro-hyperframes-roxabi"
   },
   "segments": [
     { "id": "intro", "type": "generated", "duration": 5 },
