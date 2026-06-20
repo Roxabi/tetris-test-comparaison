@@ -12,6 +12,8 @@ Showcase bilingue (FR/EN) : même brief Tetris HTML, mais **deux agents au dépa
 
 [tetris.roxabi.dev](https://tetris.roxabi.dev) — récap vidéo ~59 s intégré (`out/tetris-comparison.mp4`).
 
+**Playbook reproductible** : [`docs/recap-obs-playbook.md`](docs/recap-obs-playbook.md) (OBS → montage ~60 s → showcase → Cloudflare Pages).
+
 ```bash
 # .env : CLOUDFLARE_API_TOKEN=…
 make deploy
