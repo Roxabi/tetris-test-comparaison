@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tetris — Comparaison IA · Roxabi</title>
-  <meta name="description" content="Comparaison de vitesse et de qualité : Grok Composer 2.5 vs Claude Sonnet vs Claude Opus Ultra sur un même brief Tetris HTML.">
+  <meta name="description" content="Comparaison Tetris HTML : Grok Composer 2.5 vs Claude Opus ultracode, puis Sonnet en renfort. Récap vidéo ~1 min, trois jeux jouables.">
   <style>
     :root {
       --bg: #f6f7f9;
@@ -257,6 +257,13 @@
 
     .video-placeholder.hidden { display: none; }
 
+    .video-meta {
+      font-size: .88rem;
+      color: var(--text-muted);
+      text-align: center;
+      margin: -.75rem 0 2rem;
+    }
+
     .section-title {
       font-size: 1.35rem;
       margin-bottom: 1rem;
@@ -422,8 +429,8 @@
         <span data-i18n="en">HTML Tetris — who ships fastest?</span>
       </h1>
       <p class="lead">
-        <span data-i18n="fr">Même brief, trois agents&nbsp;: Grok Composer&nbsp;2.5, Claude Sonnet (effort medium) et Claude Opus (effort ultra + subagents). Objectif&nbsp;: comparer vitesse et qualité du livrable, pas faire un benchmark scientifique.</span>
-        <span data-i18n="en">Same brief, three agents: Grok Composer 2.5, Claude Sonnet (medium effort) and Claude Opus (ultra effort + subagents). Goal: compare delivery speed and output quality — not a rigorous benchmark.</span>
+        <span data-i18n="fr">On démarre avec <strong>Grok Composer&nbsp;2.5</strong> et <strong>Claude Opus</strong> (effort ultra code + subagents) sur le même brief Tetris. Sonnet arrive ensuite — Opus était trop lent et buggué. Objectif&nbsp;: comparer vitesse et qualité du livrable, pas un benchmark scientifique.</span>
+        <span data-i18n="en">We start with <strong>Grok Composer 2.5</strong> and <strong>Claude Opus</strong> (ultra code effort + subagents) on the same Tetris brief. Sonnet joins later — Opus was too slow and buggy. Goal: compare delivery speed and output quality — not a rigorous benchmark.</span>
       </p>
     </section>
 
@@ -436,6 +443,10 @@
       </div>
       <iframe id="youtube-embed" class="hidden" title="Tetris comparison recap" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
     </section>
+    <p class="video-meta">
+      <span data-i18n="fr">Récap monté ~59&nbsp;s · intro/outro Roxabi · son léger · source OBS 59&nbsp;min compressée</span>
+      <span data-i18n="en">~59&nbsp;s edited recap · Roxabi intro/outro · light audio · 59&nbsp;min OBS source compressed</span>
+    </p>
 
     <div class="grid-2">
       <div class="card">
@@ -443,17 +454,20 @@
         <div class="stat-row"><span class="stat-label" data-i18n="fr">Durée</span><span class="stat-label" data-i18n="en">Duration</span><span class="stat-value">~2 min <span class="badge badge-fast" data-i18n="fr">rapide</span><span class="badge badge-fast" data-i18n="en">fast</span></span></div>
         <div class="stat-row"><span class="stat-label" data-i18n="fr">Fichier</span><span class="stat-label" data-i18n="en">Output</span><span class="stat-value">1 × index.html</span></div>
         <div class="stat-row"><span class="stat-label" data-i18n="fr">Relances</span><span class="stat-label" data-i18n="en">Restarts</span><span class="stat-value" data-i18n="fr">0</span><span class="stat-value" data-i18n="en">0</span></div>
+        <div class="stat-row"><span class="stat-label" data-i18n="fr">Départ</span><span class="stat-label" data-i18n="en">Start</span><span class="stat-value" data-i18n="fr">dès le brief</span><span class="stat-value" data-i18n="en">from the brief</span></div>
       </div>
       <div class="card">
         <h2><span class="dot dot-sonnet"></span> Claude · Sonnet</h2>
         <div class="stat-row"><span class="stat-label" data-i18n="fr">Durée</span><span class="stat-label" data-i18n="en">Duration</span><span class="stat-value">~2 min 10 <span class="badge badge-fast" data-i18n="fr">rapide</span><span class="badge badge-fast" data-i18n="en">fast</span></span></div>
         <div class="stat-row"><span class="stat-label" data-i18n="fr">Effort</span><span class="stat-label" data-i18n="en">Effort</span><span class="stat-value">medium</span></div>
+        <div class="stat-row"><span class="stat-label" data-i18n="fr">Ajout</span><span class="stat-label" data-i18n="en">Added</span><span class="stat-value" data-i18n="fr">après blocage Opus</span><span class="stat-value" data-i18n="en">after Opus stalled</span></div>
         <div class="stat-row"><span class="stat-label" data-i18n="fr">Relances</span><span class="stat-label" data-i18n="en">Restarts</span><span class="stat-value" data-i18n="fr">stop + recommencer</span><span class="stat-value" data-i18n="en">stop + restart</span></div>
       </div>
       <div class="card" style="grid-column: 1 / -1;">
         <h2><span class="dot dot-opus"></span> Claude · Opus Ultra</h2>
-        <div class="stat-row"><span class="stat-label" data-i18n="fr">Durée</span><span class="stat-label" data-i18n="en">Duration</span><span class="stat-value">35 min+ <span class="badge badge-slow" data-i18n="fr">lent</span><span class="badge badge-slow" data-i18n="en">slow</span></span></div>
-        <div class="stat-row"><span class="stat-label" data-i18n="fr">Effort</span><span class="stat-label" data-i18n="en">Effort</span><span class="stat-value">ultra code + subagents Sonnet</span></div>
+        <div class="stat-row"><span class="stat-label" data-i18n="fr">Durée</span><span class="stat-label" data-i18n="en">Duration</span><span class="stat-value">~50 min <span class="badge badge-slow" data-i18n="fr">lent</span><span class="badge badge-slow" data-i18n="en">slow</span></span></div>
+        <div class="stat-row"><span class="stat-label" data-i18n="fr">Effort</span><span class="stat-label" data-i18n="en">Effort</span><span class="stat-value">ultra code + subagents</span></div>
+        <div class="stat-row"><span class="stat-label" data-i18n="fr">Départ</span><span class="stat-label" data-i18n="en">Start</span><span class="stat-value" data-i18n="fr">dès le brief (face à Grok)</span><span class="stat-value" data-i18n="en">from the brief (vs Grok)</span></div>
         <div class="stat-row"><span class="stat-label" data-i18n="fr">Relances</span><span class="stat-label" data-i18n="en">Restarts</span><span class="stat-value" data-i18n="fr">relancé (bugs conservés dans la vidéo)</span><span class="stat-value" data-i18n="en">restarted (bugs kept in the video)</span></div>
         <div class="stat-row"><span class="stat-label" data-i18n="fr">Extra</span><span class="stat-label" data-i18n="en">Extra</span><span class="stat-value" data-i18n="fr">tests Playwright, screenshots</span><span class="stat-value" data-i18n="en">Playwright tests, screenshots</span></div>
       </div>
@@ -513,8 +527,12 @@
     <div class="findings">
       <ul>
         <li>
-          <span data-i18n="fr"><strong>Le brief a été refait 2–3 fois.</strong> Claude s'est arrêté net à plusieurs reprises — comme un blocage côté infrastructure Anthropic. La version vidéo garde ces bugs (relance Opus, stop + restart Sonnet).</span>
-          <span data-i18n="en"><strong>The brief was rerun 2–3 times.</strong> Claude stalled completely several times — felt like an Anthropic-side issue. The video keeps those bugs (Opus restart, Sonnet stop + restart).</span>
+          <span data-i18n="fr"><strong>On ne part pas avec trois agents.</strong> D'abord Grok + Opus ultracode ; Sonnet n'arrive qu'après le blocage d'Opus. Même consigne Tetris pour tous, mais pas le même timing de lancement.</span>
+          <span data-i18n="en"><strong>We didn't start with three agents.</strong> Grok + Opus ultracode first; Sonnet only after Opus stalled. Same Tetris brief for everyone, but not the same launch timing.</span>
+        </li>
+        <li>
+          <span data-i18n="fr"><strong>Le brief a été refait 2–3 fois.</strong> Claude s'est arrêté net à plusieurs reprises — comme un blocage côté infrastructure. La vidéo garde ces incidents (STALL Opus, reset, stop + restart Sonnet).</span>
+          <span data-i18n="en"><strong>The brief was rerun 2–3 times.</strong> Claude stalled completely several times — felt like an infrastructure issue. The video keeps those incidents (Opus STALL, reset, Sonnet stop + restart).</span>
         </li>
         <li>
           <span data-i18n="fr"><strong>Opus + Ultra n'est pas toujours la bonne réponse.</strong> Sur une demande basique, ça pousse à l'over-engineering sans raison claire.</span>
@@ -538,12 +556,12 @@
 
     <div class="card">
       <h2>
-        <span data-i18n="fr">Le brief (identique pour tous)</span>
-        <span data-i18n="en">The brief (identical for all)</span>
+        <span data-i18n="fr">Le brief (même consigne Tetris)</span>
+        <span data-i18n="en">The brief (same Tetris spec)</span>
       </h2>
       <p style="font-size:.9rem;color:var(--text-muted);margin-bottom:.75rem;">
-        <span data-i18n="fr">Tetris complet en un seul <code>index.html</code> autonome — pas de CDN, pas de build. Détails dans <a href="DEMANDE.md">DEMANDE.md</a>.</span>
-        <span data-i18n="en">Full Tetris in a single self-contained <code>index.html</code> — no CDN, no build. Details in <a href="DEMANDE.md">DEMANDE.md</a>.</span>
+        <span data-i18n="fr">Tetris complet en un seul <code>index.html</code> autonome — pas de CDN, pas de build. Grok et Opus ultracode partent ensemble ; Sonnet rejoint plus tard. Détails dans <a href="DEMANDE.md">DEMANDE.md</a> · <a href="video-plan.html">plan vidéo</a>.</span>
+        <span data-i18n="en">Full Tetris in a single self-contained <code>index.html</code> — no CDN, no build. Grok and Opus ultracode start together; Sonnet joins later. Details in <a href="DEMANDE.md">DEMANDE.md</a> · <a href="video-plan.html">video plan</a>.</span>
       </p>
       <table>
         <thead>
@@ -573,7 +591,7 @@
           <tr>
             <td>Claude</td>
             <td>Opus · ultra + subagents</td>
-            <td>35 min+</td>
+            <td>~50 min</td>
             <td>~44 KB + tests</td>
           </tr>
         </tbody>
