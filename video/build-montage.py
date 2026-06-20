@@ -15,6 +15,13 @@ TMP = OUT / "_tmp"
 FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 FONT_MONO = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf"
 
+# roxabi-production delivery presets — yuv444p for crisp UI text (Chrome/Firefox),
+# yuv420p compat for Safari/iOS (High 4:4:4 breaks hardware decode there).
+COLOR_ARGS = [
+    "-colorspace", "bt709", "-color_primaries", "bt709",
+    "-color_trc", "bt709", "-color_range", "tv",
+]
+
 
 def run(cmd: list[str], **kw) -> None:
     print("+", " ".join(cmd), flush=True)
@@ -27,8 +34,21 @@ def esc(text: str) -> str:
 
 
 def scale_vf(extra: str = "") -> str:
-    base = "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30"
+    base = (
+        "scale=1920:1080:force_original_aspect_ratio=decrease:flags=lanczos,"
+        "pad=1920:1080:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30"
+    )
     return f"{base},{extra}" if extra else base
+
+
+def x264_args(crf: int, pix_fmt: str, faststart: bool = False) -> list[str]:
+    args = [
+        "-c:v", "libx264", "-preset", "medium", "-crf", str(crf),
+        "-pix_fmt", pix_fmt, *COLOR_ARGS,
+    ]
+    if faststart:
+        args.extend(["-movflags", "+faststart"])
+    return args
 
 
 def panel_timer_vf(start: float, label: str, x: str) -> str:
@@ -82,7 +102,7 @@ def extract_segment(src: Path, ss: float, t: float, out: Path, out_dur: float, e
     run([
         "ffmpeg", "-y", "-ss", str(ss), "-i", str(src), "-t", str(t),
         "-vf", vf, "-an", "-t", str(out_dur),
-        "-c:v", "libx264", "-preset", "fast", "-crf", "20", str(out),
+        *x264_args(20, "yuv420p"), str(out),
     ])
 
 
@@ -90,7 +110,7 @@ def extract_segment_1x(src: Path, ss: float, t: float, out: Path, extra_vf: str 
     vf = scale_vf(extra_vf)
     run([
         "ffmpeg", "-y", "-ss", str(ss), "-i", str(src), "-t", str(t),
-        "-vf", vf, "-an", "-c:v", "libx264", "-preset", "fast", "-crf", "20", str(out),
+        "-vf", vf, "-an", *x264_args(20, "yuv420p"), str(out),
     ])
 
 
@@ -112,7 +132,7 @@ def make_intro(out: Path, duration: int = 12) -> None:
     )
     run([
         "ffmpeg", "-y", "-f", "lavfi", "-i", f"color=c=0x0c1020:s=1920x1080:d={duration}:r=30",
-        "-vf", vf, "-c:v", "libx264", "-preset", "fast", "-crf", "20", str(out),
+        "-vf", vf, "-an", *x264_args(20, "yuv420p"), str(out),
     ])
 
 
@@ -126,7 +146,7 @@ def make_ellipsis(out: Path, duration: int = 5) -> None:
     )
     run([
         "ffmpeg", "-y", "-f", "lavfi", "-i", f"color=c=0x0c1020:s=1920x1080:d={duration}:r=30",
-        "-vf", vf, "-c:v", "libx264", "-preset", "fast", "-crf", "20", str(out),
+        "-vf", vf, "-an", *x264_args(20, "yuv420p"), str(out),
     ])
 
 
@@ -147,7 +167,7 @@ def make_outro(out: Path, duration: int = 12) -> None:
         )
     run([
         "ffmpeg", "-y", "-f", "lavfi", "-i", f"color=c=0x0c1020:s=1920x1080:d={duration}:r=30",
-        "-vf", ",".join(vf_parts), "-c:v", "libx264", "-preset", "fast", "-crf", "20", str(out),
+        "-vf", ",".join(vf_parts), "-an", *x264_args(20, "yuv420p"), str(out),
     ])
 
 
@@ -156,7 +176,19 @@ def concat(parts: list[Path], out: Path) -> None:
     list_file.write_text("\n".join(f"file '{p}'" for p in parts))
     run([
         "ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(list_file),
-        "-c:v", "libx264", "-preset", "fast", "-crf", "18", "-pix_fmt", "yuv420p", str(out),
+        "-an", "-c", "copy", str(out),
+    ])
+
+
+def export_distribution(master: Path, hq: Path, compat: Path) -> None:
+    """Master (yuv420p segments) → HQ yuv444p + Safari-safe yuv420p compat."""
+    run([
+        "ffmpeg", "-y", "-i", str(master),
+        "-an", *x264_args(18, "yuv444p", faststart=True), str(hq),
+    ])
+    run([
+        "ffmpeg", "-y", "-i", str(master),
+        "-an", *x264_args(23, "yuv420p", faststart=True), str(compat),
     ])
 
 
@@ -212,9 +244,15 @@ def main() -> int:
             extract_segment(src, seg["ss"], seg["t"], out, out_dur, vf)
         parts.append(out)
 
-    final = PROJECT / cfg["output"]
-    concat(parts, final)
-    print(f"\n✓ {final} ({final.stat().st_size / 1024 / 1024:.1f} MB)")
+    master = TMP / "master.mp4"
+    concat(parts, master)
+
+    hq = PROJECT / cfg.get("output", "out/tetris-comparison.mp4")
+    compat = PROJECT / cfg.get("output_compat", "out/tetris-comparison-compat.mp4")
+    export_distribution(master, hq, compat)
+
+    print(f"\n✓ {hq} ({hq.stat().st_size / 1024 / 1024:.1f} MB, yuv444p HQ)")
+    print(f"✓ {compat} ({compat.stat().st_size / 1024 / 1024:.1f} MB, yuv420p compat)")
     return 0
 
 

@@ -428,9 +428,7 @@
     </section>
 
     <section class="video-wrap" id="video-section">
-      <video id="recap-video" controls playsinline preload="metadata" poster="">
-        <source src="/out/tetris-comparison.mp4" type="video/mp4">
-      </video>
+      <video id="recap-video" controls playsinline preload="metadata" poster=""></video>
       <div class="video-placeholder hidden" id="video-placeholder">
         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
         <p data-i18n="fr"><strong>Vidéo récap à venir</strong><br>L'URL YouTube sera ajoutée ici.</p>
@@ -639,6 +637,17 @@
 
       setLang(detectLang());
       setTheme(detectTheme());
+
+      (function initRecapVideo() {
+        var recap = document.getElementById('recap-video');
+        if (!recap) return;
+        var probe = document.createElement('video');
+        // High 4:4:4 Predictive (yuv444p) — clean UI text; Safari/iOS can't decode it.
+        var supportsHq = probe.canPlayType('video/mp4; codecs="avc1.640034"') !== '';
+        recap.src = supportsHq
+          ? '/out/tetris-comparison.mp4'
+          : '/out/tetris-comparison-compat.mp4';
+      })();
 
       if (YOUTUBE_ID) {
         var iframe = document.getElementById('youtube-embed');
