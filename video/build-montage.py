@@ -394,13 +394,11 @@ def composite_speed_badge(segment: Path, label: str, out: Path) -> None:
             "-vf", vf, "-an", *x264_args(20, "yuv420p"), str(out),
         ])
         return
-    if badge.suffix == ".webm":
-        filt = (
-            "[1]format=rgba,colorchannelmixer=aa=1[badge];"
-            "[0][badge]overlay=W-w-30:24:shortest=1"
-        )
-    else:
-        filt = "[0][1]overlay=W-w-30:24:shortest=1"
+    # HyperFrames badge is full 1920×1080 with opaque black (no alpha) — key it out.
+    filt = (
+        "[1]colorkey=0x000000:0.02:0.08,format=rgba[badge];"
+        "[0][badge]overlay=W-w-30:24:shortest=1"
+    )
     run([
         "ffmpeg", "-y", "-i", str(segment),
         "-stream_loop", "-1", "-i", str(badge),
@@ -452,7 +450,7 @@ def generate_audio_assets() -> dict[str, Path]:
         "-filter_complex",
         "[0][1]amix=inputs=2:duration=first[tones];"
         "[tones][2]amix=inputs=2:duration=first,"
-        "lowpass=f=400,volume=0.09,afade=t=in:d=2,afade=t=out:st=68:d=2",
+        "lowpass=f=400,volume=0.22,afade=t=in:d=2,afade=t=out:st=68:d=2",
         "-ar", "48000", "-ac", "2", str(AUDIO_DIR / "bgm.wav"),
     ])
     synth("tap", [
@@ -530,7 +528,8 @@ def mix_audio(
 
     n = len(mix_labels)
     filters.append(
-        f"{''.join(mix_labels)}amix=inputs={n}:duration=first:dropout_transition=0[aout]"
+        f"{''.join(mix_labels)}amix=inputs={n}:duration=first:dropout_transition=0:normalize=0,"
+        f"alimiter=limit=0.95,volume=1.8[aout]"
     )
 
     run([

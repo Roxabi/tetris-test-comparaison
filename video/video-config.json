@@ -20,15 +20,14 @@
     "intensity": 0.55
   },
   "audio": {
-    "bgm_volume": 0.07,
+    "bgm_volume": 0.18,
     "sfx": [
-      { "segment": "grok_done", "offset": 0.15, "sound": "chime", "volume": 0.32 },
-      { "segment": "stall", "offset": 0.05, "sound": "tension", "volume": 0.24 },
-      { "segment": "sonnet_open", "offset": 0.1, "sound": "tap", "volume": 0.5 },
-      { "segment": "sonnet_done", "offset": 0.1, "sound": "chime", "volume": 0.28 },
-      { "segment": "bumper_grok", "offset": 0.02, "sound": "whoosh", "volume": 0.32 },
-      { "segment": "bumper_sonnet", "offset": 0.02, "sound": "whoosh", "volume": 0.32 },
-      { "segment": "bumper_opus", "offset": 0.02, "sound": "whoosh", "volume": 0.32 }
+      { "segment": "grok_done", "offset": 0.15, "sound": "chime", "volume": 0.55 },
+      { "segment": "stall", "offset": 0.0, "sound": "whoosh", "volume": 0.4 },
+      { "segment": "stall", "offset": 0.05, "sound": "tension", "volume": 0.45 },
+      { "segment": "sonnet_open", "offset": 0.1, "sound": "tap", "volume": 0.75 },
+      { "segment": "sonnet_done", "offset": 0.1, "sound": "chime", "volume": 0.5 },
+      { "segment": "opus_accel", "offset": 0.02, "sound": "whoosh", "volume": 0.4 }
     ]
   },
   "segments": [
@@ -65,8 +64,6 @@
       "panel": "grok",
       "caption": "Grok termine en 2 min"
     },
-
-    { "id": "bumper_grok", "type": "generated", "variant": "bumper", "duration": 0.5, "no_grade": true },
 
     {
       "id": "stall",
@@ -142,8 +139,6 @@
       "caption": "Sonnet - 2:10"
     },
 
-    { "id": "bumper_sonnet", "type": "generated", "variant": "bumper", "duration": 0.5, "no_grade": true },
-
     {
       "id": "opus_accel",
       "type": "speed_ramp",
@@ -176,8 +171,6 @@
       "panel": "opus",
       "caption": "Opus - 50 min"
     },
-
-    { "id": "bumper_opus", "type": "generated", "variant": "bumper", "duration": 0.5, "no_grade": true },
 
     {
       "id": "showcase",
