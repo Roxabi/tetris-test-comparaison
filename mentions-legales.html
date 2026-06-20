@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mentions légales · Tetris Comparaison · Roxabi</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --surface: #ffffff;
+      --border: #d4dae3;
+      --text: #141820;
+      --text-muted: #5c6678;
+      --accent: #2f6fed;
+      --accent-hover: #1f57c8;
+      --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    [data-theme="dark"] {
+      --bg: #0c0e14;
+      --surface: #151820;
+      --border: #2e3548;
+      --text: #e8ecf4;
+      --text-muted: #8b95a8;
+      --accent: #5b8def;
+      --accent-hover: #7aa3f5;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.65; }
+    a { color: var(--accent); }
+    a:hover { color: var(--accent-hover); }
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: .85rem 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: .75rem;
+    }
+    .brand { font-weight: 700; color: var(--text); text-decoration: none; }
+    .controls { display: flex; gap: .5rem; }
+    .ctrl-btn {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      padding: .35rem .7rem;
+      border-radius: 999px;
+      font-size: .8rem;
+      cursor: pointer;
+    }
+    .ctrl-btn[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+    main { max-width: 720px; margin: 0 auto; padding: 2rem 1.25rem 3rem; }
+    h1 { font-size: 1.75rem; margin-bottom: .5rem; }
+    .meta { color: var(--text-muted); font-size: .88rem; margin-bottom: 2rem; }
+    h2 { font-size: 1.1rem; margin: 1.75rem 0 .65rem; }
+    p, li { font-size: .95rem; margin-bottom: .65rem; }
+    ul { padding-left: 1.25rem; }
+    .back { display: inline-block; margin-bottom: 1.5rem; font-size: .9rem; }
+    [data-lang="en"] [data-i18n="fr"] { display: none !important; }
+    [data-lang="fr"] [data-i18n="en"] { display: none !important; }
+    footer {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 1.5rem 1.25rem;
+      border-top: 1px solid var(--border);
+      font-size: .85rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="brand" href="index.html">Tetris · Roxabi</a>
+    <div class="controls">
+      <button class="ctrl-btn" id="lang-fr" type="button" aria-pressed="true">FR</button>
+      <button class="ctrl-btn" id="lang-en" type="button" aria-pressed="false">EN</button>
+      <button class="ctrl-btn" id="theme-toggle" type="button">☀/☾</button>
+    </div>
+  </header>
+
+  <main>
+    <a class="back" href="index.html" data-i18n="fr">← Retour</a>
+    <a class="back" href="index.html" data-i18n="en">← Back</a>
+
+    <h1>
+      <span data-i18n="fr">Mentions légales</span>
+      <span data-i18n="en">Legal notice</span>
+    </h1>
+    <p class="meta">
+      <span data-i18n="fr">Dernière mise à jour · juin 2026 · droit français</span>
+      <span data-i18n="en">Last updated · June 2026 · French law</span>
+    </p>
+
+    <h2>
+      <span data-i18n="fr">Éditeur</span>
+      <span data-i18n="en">Publisher</span>
+    </h2>
+    <p>
+      <span data-i18n="fr">Le site <strong>tetris.roxabi.dev</strong> est édité par <strong>ROX@BI</strong>, EURL au capital de 1&nbsp;000&nbsp;€. Siège&nbsp;: 268 route de Bellet, 06200 Nice, France. RCS Nice&nbsp;: 848&nbsp;127&nbsp;353. SIRET&nbsp;: 848&nbsp;127&nbsp;353&nbsp;00011. TVA&nbsp;: FR00848127353. Directeur de publication&nbsp;: Mickaël Bouly — <a href="mailto:mickael@bouly.io">mickael@bouly.io</a>.</span>
+      <span data-i18n="en">This site, <strong>tetris.roxabi.dev</strong>, is published by <strong>ROX@BI</strong>, a French EURL with share capital of €1,000. Registered office: 268 route de Bellet, 06200 Nice, France. RCS Nice: 848 127 353. SIRET: 848 127 353 00011. VAT: FR00848127353. Publication director: Mickaël Bouly — <a href="mailto:mickael@bouly.io">mickael@bouly.io</a>.</span>
+    </p>
+
+    <h2>
+      <span data-i18n="fr">Hébergeur</span>
+      <span data-i18n="en">Hosting</span>
+    </h2>
+    <p>
+      <span data-i18n="fr">Hébergement par <strong>Cloudflare Pages</strong> (Cloudflare, Inc., 101 Townsend St, San Francisco, CA 94107, USA). <a href="https://www.cloudflare.com" rel="noopener">cloudflare.com</a></span>
+      <span data-i18n="en">Hosted on <strong>Cloudflare Pages</strong> (Cloudflare, Inc., 101 Townsend St, San Francisco, CA 94107, USA). <a href="https://www.cloudflare.com" rel="noopener">cloudflare.com</a></span>
+    </p>
+
+    <h2>
+      <span data-i18n="fr">Propriété intellectuelle</span>
+      <span data-i18n="en">Intellectual property</span>
+    </h2>
+    <p>
+      <span data-i18n="fr">Les fichiers Tetris générés par les agents IA sont publiés à titre de démonstration comparative, dans leur forme brute. Le code source de ce site showcase et le dépôt <a href="https://github.com/Roxabi/tetris-test-comparaison" rel="noopener">tetris-test-comparaison</a> sont sous licence <a href="https://opensource.org/license/agpl-v3" rel="noopener">AGPL-3.0</a>. Le nom et le logo Roxabi restent la propriété de ROX@BI.</span>
+      <span data-i18n="en">Tetris files generated by AI agents are published as a comparative demonstration, in their raw form. This showcase site and the <a href="https://github.com/Roxabi/tetris-test-comparaison" rel="noopener">tetris-test-comparaison</a> repository are licensed under <a href="https://opensource.org/license/agpl-v3" rel="noopener">AGPL-3.0</a>. The Roxabi name and logo remain the property of ROX@BI.</span>
+    </p>
+
+    <h2>
+      <span data-i18n="fr">Données personnelles</span>
+      <span data-i18n="en">Personal data</span>
+    </h2>
+    <p>
+      <span data-i18n="fr">Aucune analytique. Aucun cookie de suivi. Aucune donnée personnelle collectée côté serveur. Le stockage local du navigateur peut conserver uniquement vos préférences de langue et de thème, sur votre appareil.</span>
+      <span data-i18n="en">No analytics. No tracking cookies. No personal data collected server-side. Browser local storage may only keep your language and theme preferences, on your device.</span>
+    </p>
+
+    <h2>
+      <span data-i18n="fr">Responsabilité</span>
+      <span data-i18n="en">Liability</span>
+    </h2>
+    <p>
+      <span data-i18n="fr">Contenu fourni à titre informatif et expérimental. Les résultats de l'expérience ne constituent pas un benchmark scientifique. Les liens externes n'engagent que leurs éditeurs.</span>
+      <span data-i18n="en">Content is provided for informational and experimental purposes. Experiment results do not constitute a scientific benchmark. External links are the responsibility of their publishers.</span>
+    </p>
+
+    <h2>
+      <span data-i18n="fr">Contenus tiers</span>
+      <span data-i18n="en">Third-party content</span>
+    </h2>
+    <p>
+      <span data-i18n="fr">La vidéo récapitulative est hébergée sur YouTube (Google LLC). Son intégration est soumise aux conditions d'utilisation de YouTube.</span>
+      <span data-i18n="en">The recap video is hosted on YouTube (Google LLC). Its embedding is subject to YouTube's terms of use.</span>
+    </p>
+  </main>
+
+  <footer>© 2026 <a href="https://roxabi.dev" rel="noopener">Roxabi</a></footer>
+
+  <script>
+    (function () {
+      var html = document.documentElement;
+      var btnFr = document.getElementById('lang-fr');
+      var btnEn = document.getElementById('lang-en');
+      var btnTheme = document.getElementById('theme-toggle');
+
+      function detectLang() {
+        var s = localStorage.getItem('tetris-showcase-lang');
+        if (s) return s;
+        return (navigator.language || 'fr').toLowerCase().startsWith('fr') ? 'fr' : 'en';
+      }
+      function detectTheme() {
+        var s = localStorage.getItem('tetris-showcase-theme');
+        if (s) return s;
+        return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      function setLang(l) {
+        html.setAttribute('data-lang', l);
+        html.lang = l;
+        btnFr.setAttribute('aria-pressed', l === 'fr');
+        btnEn.setAttribute('aria-pressed', l === 'en');
+        localStorage.setItem('tetris-showcase-lang', l);
+      }
+      function setTheme(t) {
+        html.setAttribute('data-theme', t);
+        localStorage.setItem('tetris-showcase-theme', t);
+      }
+      btnFr.onclick = function () { setLang('fr'); };
+      btnEn.onclick = function () { setLang('en'); };
+      btnTheme.onclick = function () {
+        setTheme(html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+      };
+      setLang(detectLang());
+      setTheme(detectTheme());
+    })();
+  </script>
+</body>
+</html>

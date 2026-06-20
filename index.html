@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tetris — Comparaison IA · Roxabi</title>
+  <meta name="description" content="Comparaison de vitesse et de qualité : Grok Composer 2.5 vs Claude Sonnet vs Claude Opus Ultra sur un même brief Tetris HTML.">
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --surface: #ffffff;
+      --surface-alt: #eef1f5;
+      --border: #d4dae3;
+      --text: #141820;
+      --text-muted: #5c6678;
+      --accent: #2f6fed;
+      --accent-soft: #e8f0ff;
+      --accent-hover: #1f57c8;
+      --success: #1a8f4c;
+      --warning: #c47a12;
+      --danger: #c93b3b;
+      --shadow: 0 8px 32px rgba(20, 24, 32, 0.08);
+      --radius: 14px;
+      --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      --mono: ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace;
+    }
+
+    [data-theme="dark"] {
+      --bg: #0c0e14;
+      --surface: #151820;
+      --surface-alt: #1c2130;
+      --border: #2e3548;
+      --text: #e8ecf4;
+      --text-muted: #8b95a8;
+      --accent: #5b8def;
+      --accent-soft: #1a2540;
+      --accent-hover: #7aa3f5;
+      --success: #3ecf7a;
+      --warning: #f0a84b;
+      --danger: #f07070;
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { color: var(--accent-hover); text-decoration: underline; }
+
+    .skip { position: absolute; left: -9999px; }
+    .skip:focus { left: 1rem; top: 1rem; z-index: 100; background: var(--accent); color: #fff; padding: .5rem 1rem; border-radius: 8px; }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: color-mix(in srgb, var(--bg) 88%, transparent);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: .85rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: .65rem;
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .brand:hover { text-decoration: none; color: var(--text); }
+
+    .brand-mark {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--accent), #7c3aed);
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-size: .85rem;
+      font-weight: 800;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      flex-wrap: wrap;
+    }
+
+    .ctrl-btn {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      padding: .4rem .75rem;
+      border-radius: 999px;
+      font-size: .82rem;
+      cursor: pointer;
+      transition: background .15s, border-color .15s;
+    }
+
+    .ctrl-btn:hover { background: var(--surface-alt); }
+    .ctrl-btn[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+
+    main { max-width: 1100px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+
+    .hero { margin-bottom: 2.5rem; }
+
+    .eyebrow {
+      display: inline-block;
+      font-size: .78rem;
+      font-weight: 600;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-soft);
+      padding: .3rem .7rem;
+      border-radius: 999px;
+      margin-bottom: 1rem;
+    }
+
+    h1 {
+      font-size: clamp(1.75rem, 4vw, 2.6rem);
+      line-height: 1.15;
+      letter-spacing: -.02em;
+      margin-bottom: .75rem;
+    }
+
+    .lead {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      max-width: 62ch;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+
+    @media (max-width: 800px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.35rem;
+      box-shadow: var(--shadow);
+    }
+
+    .card h2 {
+      font-size: 1.05rem;
+      margin-bottom: .75rem;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+
+    .card h2 .dot {
+      width: .55rem;
+      height: .55rem;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .dot-grok { background: #f97316; }
+    .dot-sonnet { background: #22c55e; }
+    .dot-opus { background: #a855f7; }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: .45rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: .92rem;
+    }
+
+    .stat-row:last-child { border-bottom: none; }
+
+    .stat-label { color: var(--text-muted); }
+    .stat-value { font-weight: 600; font-family: var(--mono); font-size: .88rem; }
+
+    .badge {
+      display: inline-block;
+      font-size: .72rem;
+      font-weight: 600;
+      padding: .15rem .5rem;
+      border-radius: 999px;
+      vertical-align: middle;
+    }
+
+    .badge-fast { background: #dcfce7; color: #166534; }
+    .badge-slow { background: #fee2e2; color: #991b1b; }
+    [data-theme="dark"] .badge-fast { background: #14532d; color: #86efac; }
+    [data-theme="dark"] .badge-slow { background: #7f1d1d; color: #fca5a5; }
+
+    .video-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      margin-bottom: 2rem;
+    }
+
+    .video-wrap iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    .video-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: .5rem;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .video-placeholder svg { opacity: .4; }
+
+    .video-placeholder.hidden { display: none; }
+
+    .section-title {
+      font-size: 1.35rem;
+      margin-bottom: 1rem;
+      letter-spacing: -.01em;
+    }
+
+    .tests {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
+
+    @media (max-width: 900px) {
+      .tests { grid-template-columns: 1fr; }
+    }
+
+    .test-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: .75rem;
+      transition: border-color .15s, transform .15s;
+    }
+
+    .test-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .test-card h3 { font-size: 1rem; }
+
+    .test-meta {
+      font-size: .82rem;
+      color: var(--text-muted);
+      font-family: var(--mono);
+    }
+
+    .test-desc { font-size: .9rem; color: var(--text-muted); flex: 1; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: .4rem;
+      padding: .6rem 1rem;
+      border-radius: 10px;
+      font-size: .88rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background .15s;
+    }
+
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-hover); color: #fff; text-decoration: none; }
+
+    .btn-ghost {
+      background: var(--surface-alt);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover { background: var(--border); text-decoration: none; color: var(--text); }
+
+    .findings {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .findings ul {
+      padding-left: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: .65rem;
+    }
+
+    .findings li { font-size: .95rem; }
+
+    .findings strong { color: var(--text); }
+
+    .opinion {
+      border-left: 3px solid var(--accent);
+      padding: 1rem 1.25rem;
+      background: var(--accent-soft);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      font-size: .95rem;
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+    }
+
+    .opinion em { color: var(--text); font-style: normal; font-weight: 600; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .88rem;
+      margin-top: .75rem;
+    }
+
+    th, td {
+      text-align: left;
+      padding: .6rem .75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th { color: var(--text-muted); font-weight: 600; font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; }
+
+    footer {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1.5rem 1.25rem 2.5rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: .75rem;
+      font-size: .85rem;
+      color: var(--text-muted);
+    }
+
+    [data-lang="en"] [data-i18n="fr"] { display: none !important; }
+    [data-lang="fr"] [data-i18n="en"] { display: none !important; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main" data-i18n="fr">Aller au contenu</a>
+  <a class="skip" href="#main" data-i18n="en">Skip to content</a>
+
+  <header>
+    <div class="header-inner">
+      <a class="brand" href="https://roxabi.dev" rel="noopener">
+        <span class="brand-mark">R</span>
+        <span>Roxabi</span>
+      </a>
+      <div class="controls">
+        <button class="ctrl-btn" id="lang-fr" type="button" aria-pressed="true">FR</button>
+        <button class="ctrl-btn" id="lang-en" type="button" aria-pressed="false">EN</button>
+        <button class="ctrl-btn" id="theme-toggle" type="button" aria-label="Toggle theme">
+          <span data-i18n="fr">Thème</span>
+          <span data-i18n="en">Theme</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero">
+      <span class="eyebrow" data-i18n="fr">Expérience · Juin 2026</span>
+      <span class="eyebrow" data-i18n="en">Experiment · June 2026</span>
+      <h1>
+        <span data-i18n="fr">Tetris HTML — qui va le plus vite&nbsp;?</span>
+        <span data-i18n="en">HTML Tetris — who ships fastest?</span>
+      </h1>
+      <p class="lead">
+        <span data-i18n="fr">Même brief, trois agents&nbsp;: Grok Composer&nbsp;2.5, Claude Sonnet (effort medium) et Claude Opus (effort ultra + subagents). Objectif&nbsp;: comparer vitesse et qualité du livrable, pas faire un benchmark scientifique.</span>
+        <span data-i18n="en">Same brief, three agents: Grok Composer 2.5, Claude Sonnet (medium effort) and Claude Opus (ultra effort + subagents). Goal: compare delivery speed and output quality — not a rigorous benchmark.</span>
+      </p>
+    </section>
+
+    <section class="video-wrap" id="video-section">
+      <div class="video-placeholder" id="video-placeholder">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <p data-i18n="fr"><strong>Vidéo récap à venir</strong><br>L'URL YouTube sera ajoutée ici.</p>
+        <p data-i18n="en"><strong>Recap video coming soon</strong><br>The YouTube URL will be embedded here.</p>
+      </div>
+      <iframe id="youtube-embed" class="hidden" title="Tetris comparison recap" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    </section>
+
+    <div class="grid-2">
+      <div class="card">
+        <h2><span class="dot dot-grok"></span> Grok · Composer 2.5</h2>
+        <div class="stat-row"><span class="stat-label" data-i18n="fr">Durée</span><span class="stat-label" data-i18n="en">Duration</span><span class="stat-value">~2 min <span class="badge badge-fast" data-i18n="fr">rapide</span><span class="badge badge-fast" data-i18n="en">fast</span></span></div>
+        <div class="stat-row"><span class="stat-label" data-i18n="fr">Fichier</span><span class="stat-label" data-i18n="en">Output</span><span class="stat-value">1 × index.html</span></div>
+        <div class="stat-row"><span class="stat-label" data-i18n="fr">Relances</span><span class="stat-label" data-i18n="en">Restarts</span><span class="stat-value" data-i18n="fr">0</span><span class="stat-value" data-i18n="en">0</span></div>
+      </div>
+      <div class="card">
+        <h2><span class="dot dot-sonnet"></span> Claude · Sonnet</h2>
+        <div class="stat-row"><span class="stat-label" data-i18n="fr">Durée</span><span class="stat-label" data-i18n="en">Duration</span><span class="stat-value">~2 min 10 <span class="badge badge-fast" data-i18n="fr">rapide</span><span class="badge badge-fast" data-i18n="en">fast</span></span></div>
+        <div class="stat-row"><span class="stat-label" data-i18n="fr">Effort</span><span class="stat-label" data-i18n="en">Effort</span><span class="stat-value">medium</span></div>
+        <div class="stat-row"><span class="stat-label" data-i18n="fr">Relances</span><span class="stat-label" data-i18n="en">Restarts</span><span class="stat-value" data-i18n="fr">stop + recommencer</span><span class="stat-value" data-i18n="en">stop + restart</span></div>
+      </div>
+      <div class="card" style="grid-column: 1 / -1;">
+        <h2><span class="dot dot-opus"></span> Claude · Opus Ultra</h2>
+        <div class="stat-row"><span class="stat-label" data-i18n="fr">Durée</span><span class="stat-label" data-i18n="en">Duration</span><span class="stat-value">35 min+ <span class="badge badge-slow" data-i18n="fr">lent</span><span class="badge badge-slow" data-i18n="en">slow</span></span></div>
+        <div class="stat-row"><span class="stat-label" data-i18n="fr">Effort</span><span class="stat-label" data-i18n="en">Effort</span><span class="stat-value">ultra code + subagents Sonnet</span></div>
+        <div class="stat-row"><span class="stat-label" data-i18n="fr">Relances</span><span class="stat-label" data-i18n="en">Restarts</span><span class="stat-value" data-i18n="fr">relancé (bugs conservés dans la vidéo)</span><span class="stat-value" data-i18n="en">restarted (bugs kept in the video)</span></div>
+        <div class="stat-row"><span class="stat-label" data-i18n="fr">Extra</span><span class="stat-label" data-i18n="en">Extra</span><span class="stat-value" data-i18n="fr">tests Playwright, screenshots</span><span class="stat-value" data-i18n="en">Playwright tests, screenshots</span></div>
+      </div>
+    </div>
+
+    <h2 class="section-title">
+      <span data-i18n="fr">Essayer les trois Tetris</span>
+      <span data-i18n="en">Try all three Tetris builds</span>
+    </h2>
+    <div class="tests">
+      <article class="test-card">
+        <h3>Grok · Composer 2.5</h3>
+        <p class="test-meta">~762 lignes · 1 fichier</p>
+        <p class="test-desc">
+          <span data-i18n="fr">Livrable minimal, jouable, thème clair/sombre. Le plus direct au brief.</span>
+          <span data-i18n="en">Minimal, playable deliverable with light/dark theme. Most direct to the brief.</span>
+        </p>
+        <a class="btn btn-primary" href="grok-composer/index.html">
+          <span data-i18n="fr">Jouer →</span>
+          <span data-i18n="en">Play →</span>
+        </a>
+      </article>
+      <article class="test-card">
+        <h3>Claude · Sonnet</h3>
+        <p class="test-meta">~778 lignes · 1 fichier</p>
+        <p class="test-desc">
+          <span data-i18n="fr">Qualité comparable à Grok en à peine plus de temps. Bon choix effort/rapidité.</span>
+          <span data-i18n="en">Comparable quality to Grok in slightly more time. Good effort/speed trade-off.</span>
+        </p>
+        <a class="btn btn-primary" href="claude-sonnet/index.html">
+          <span data-i18n="fr">Jouer →</span>
+          <span data-i18n="en">Play →</span>
+        </a>
+      </article>
+      <article class="test-card">
+        <h3>Claude · Opus Ultra</h3>
+        <p class="test-meta">~1 335 lignes · tests inclus</p>
+        <p class="test-desc">
+          <span data-i18n="fr">Over-engineering visible&nbsp;: infra de tests, commentaires massifs, complexité hors brief.</span>
+          <span data-i18n="en">Visible over-engineering: test infra, heavy comments, complexity beyond the brief.</span>
+        </p>
+        <a class="btn btn-primary" href="claude-opus/index.html">
+          <span data-i18n="fr">Jouer →</span>
+          <span data-i18n="en">Play →</span>
+        </a>
+        <a class="btn btn-ghost" href="https://github.com/Roxabi/tetris-test-comparaison/tree/main/claude-opus/tests" rel="noopener">
+          <span data-i18n="fr">Voir les tests</span>
+          <span data-i18n="en">View tests</span>
+        </a>
+      </article>
+    </div>
+
+    <h2 class="section-title">
+      <span data-i18n="fr">Ce qu'on a appris</span>
+      <span data-i18n="en">What we learned</span>
+    </h2>
+    <div class="findings">
+      <ul>
+        <li>
+          <span data-i18n="fr"><strong>Le brief a été refait 2–3 fois.</strong> Claude s'est arrêté net à plusieurs reprises — comme un blocage côté infrastructure Anthropic. La version vidéo garde ces bugs (relance Opus, stop + restart Sonnet).</span>
+          <span data-i18n="en"><strong>The brief was rerun 2–3 times.</strong> Claude stalled completely several times — felt like an Anthropic-side issue. The video keeps those bugs (Opus restart, Sonnet stop + restart).</span>
+        </li>
+        <li>
+          <span data-i18n="fr"><strong>Opus + Ultra n'est pas toujours la bonne réponse.</strong> Sur une demande basique, ça pousse à l'over-engineering sans raison claire.</span>
+          <span data-i18n="en"><strong>Opus + Ultra isn't always the right call.</strong> On a basic request it drifts into over-engineering without a clear payoff.</span>
+        </li>
+        <li>
+          <span data-i18n="fr"><strong>Grok est très rapide</strong>, mais Sonnet peut matcher ce rythme avec le bon niveau d'effort.</span>
+          <span data-i18n="en"><strong>Grok is very fast</strong>, but Sonnet can match that pace with the right effort level.</span>
+        </li>
+        <li>
+          <span data-i18n="fr"><strong>Un test «&nbsp;simple&nbsp;» révèle beaucoup.</strong> Il met surtout en lumière les problématiques Claude plus que la surperformance de Grok.</span>
+          <span data-i18n="en"><strong>A "simple" test reveals a lot.</strong> It highlighted Claude's pain points more than Grok's outperformance.</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="opinion">
+      <span data-i18n="fr"><em>Notre lecture&nbsp;:</em> ce n'est pas un benchmark rigoureux — c'est un témoignage terrain. Pour un Tetris one-file, Sonnet medium ou Composer 2.5 suffisent. Opus Ultra a du sens quand la complexité le justifie, pas par défaut.</span>
+      <span data-i18n="en"><em>Our take:</em> this isn't a rigorous benchmark — it's a field report. For a one-file Tetris, Sonnet medium or Composer 2.5 are enough. Opus Ultra makes sense when complexity warrants it, not by default.</span>
+    </div>
+
+    <div class="card">
+      <h2>
+        <span data-i18n="fr">Le brief (identique pour tous)</span>
+        <span data-i18n="en">The brief (identical for all)</span>
+      </h2>
+      <p style="font-size:.9rem;color:var(--text-muted);margin-bottom:.75rem;">
+        <span data-i18n="fr">Tetris complet en un seul <code>index.html</code> autonome — pas de CDN, pas de build. Détails dans <a href="DEMANDE.md">DEMANDE.md</a>.</span>
+        <span data-i18n="en">Full Tetris in a single self-contained <code>index.html</code> — no CDN, no build. Details in <a href="DEMANDE.md">DEMANDE.md</a>.</span>
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Agent</th>
+            <th data-i18n="fr">Modèle / réglage</th>
+            <th data-i18n="en">Model / setting</th>
+            <th data-i18n="fr">Durée</th>
+            <th data-i18n="en">Duration</th>
+            <th data-i18n="fr">Taille</th>
+            <th data-i18n="en">Size</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Grok</td>
+            <td>Composer 2.5</td>
+            <td>~2 min</td>
+            <td>~23 KB</td>
+          </tr>
+          <tr>
+            <td>Claude</td>
+            <td>Sonnet · effort medium</td>
+            <td>~2 min 10</td>
+            <td>~23 KB</td>
+          </tr>
+          <tr>
+            <td>Claude</td>
+            <td>Opus · ultra + subagents</td>
+            <td>35 min+</td>
+            <td>~44 KB + tests</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <footer>
+    <span>© 2026 <a href="https://roxabi.dev" rel="noopener">Roxabi</a></span>
+    <span>
+      <a href="mentions-legales.html" data-i18n="fr">Mentions légales</a>
+      <a href="mentions-legales.html" data-i18n="en">Legal notice</a>
+      ·
+      <a href="https://github.com/Roxabi/tetris-test-comparaison" rel="noopener">GitHub</a>
+    </span>
+  </footer>
+
+  <script>
+    (function () {
+      var STORAGE_LANG = 'tetris-showcase-lang';
+      var STORAGE_THEME = 'tetris-showcase-theme';
+      var YOUTUBE_ID = ''; // Set when video URL is provided, e.g. 'dQw4w9WgXcQ'
+
+      var html = document.documentElement;
+      var btnFr = document.getElementById('lang-fr');
+      var btnEn = document.getElementById('lang-en');
+      var btnTheme = document.getElementById('theme-toggle');
+
+      function detectLang() {
+        var saved = localStorage.getItem(STORAGE_LANG);
+        if (saved === 'fr' || saved === 'en') return saved;
+        var nav = (navigator.language || 'fr').toLowerCase();
+        return nav.startsWith('fr') ? 'fr' : 'en';
+      }
+
+      function detectTheme() {
+        var saved = localStorage.getItem(STORAGE_THEME);
+        if (saved === 'light' || saved === 'dark') return saved;
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+
+      function setLang(lang) {
+        html.setAttribute('data-lang', lang);
+        html.lang = lang;
+        btnFr.setAttribute('aria-pressed', lang === 'fr');
+        btnEn.setAttribute('aria-pressed', lang === 'en');
+        localStorage.setItem(STORAGE_LANG, lang);
+      }
+
+      function setTheme(theme) {
+        html.setAttribute('data-theme', theme);
+        localStorage.setItem(STORAGE_THEME, theme);
+      }
+
+      btnFr.addEventListener('click', function () { setLang('fr'); });
+      btnEn.addEventListener('click', function () { setLang('en'); });
+      btnTheme.addEventListener('click', function () {
+        var next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        setTheme(next);
+      });
+
+      setLang(detectLang());
+      setTheme(detectTheme());
+
+      if (YOUTUBE_ID) {
+        var iframe = document.getElementById('youtube-embed');
+        var placeholder = document.getElementById('video-placeholder');
+        iframe.src = 'https://www.youtube-nocookie.com/embed/' + YOUTUBE_ID;
+        iframe.classList.remove('hidden');
+        placeholder.classList.add('hidden');
+      }
+    })();
+  </script>
+</body>
+</html>
