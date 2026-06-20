@@ -12,6 +12,13 @@ Showcase bilingue (FR/EN) : même brief Tetris HTML, mais **deux agents au dépa
 
 [tetris.roxabi.dev](https://tetris.roxabi.dev) — récap vidéo ~59 s intégré (`out/tetris-comparison.mp4`).
 
+```bash
+# .env : CLOUDFLARE_API_TOKEN=…
+make deploy
+```
+
+Push sur `main` déclenche aussi le workflow GitHub Actions si le secret `CLOUDFLARE_API_TOKEN` est configuré sur le dépôt.
+
 ## Brief
 
 Voir [`DEMANDE.md`](DEMANDE.md) — même consigne pour tous ; ordre de lancement différent (Grok+Opus d'abord).

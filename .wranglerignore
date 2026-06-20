@@ -1,8 +1,6 @@
-node_modules/
-.DS_Store
-.env
-.env.wrangler/
+video/source/
 out/_tmp/
 .wrangler/
 video/__pycache__/
 video/assets/audio/
+.git/
