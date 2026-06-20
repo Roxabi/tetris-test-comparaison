@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <link rel="stylesheet" href="../hyperframes-shared.css" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      :root { --bg: #0d1117; --accent: #f0b429; --text: #f0ede6; --dim: #6b7280; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        width: 1920px; height: 1080px; overflow: hidden;
+        background: var(--bg); color: var(--text);
+        font-family: "Inter", system-ui, sans-serif;
+      }
+      .scene {
+        position: absolute; inset: 0;
+        display: flex; align-items: center; justify-content: center; gap: 24px;
+      }
+      .slash {
+        font-weight: 900; font-size: 140px; color: var(--accent);
+        letter-spacing: -0.06em;
+      }
+      .line {
+        width: 0; height: 3px; background: var(--accent);
+      }
+      .meta {
+        position: absolute; bottom: 80px; left: 0; right: 0;
+        text-align: center; font-size: 13px; letter-spacing: 0.2em;
+        text-transform: uppercase; color: var(--dim);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-duration="0.5" data-width="1920" data-height="1080">
+      <div id="scene" class="scene clip" data-start="0" data-duration="0.5" data-track-index="1">
+        <div class="slash" id="slash">/</div>
+        <div class="line" id="line"></div>
+        <div class="meta" id="meta">ROXABI</div>
+      </div>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true, defaults: { ease: "power2.inOut" } });
+      tl.from("#slash", { autoAlpha: 0, scale: 0.5, rotation: -20, duration: 0.2 }, 0.05)
+        .to("#line", { width: 420, duration: 0.25 }, 0.1)
+        .to("#scene", { autoAlpha: 0, filter: "blur(10px)", duration: 0.15 }, 0.32);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

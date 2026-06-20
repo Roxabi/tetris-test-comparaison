@@ -14,6 +14,9 @@ OUT = PROJECT / "out"
 TMP = OUT / "_tmp"
 INTRO_HF = ROOT / "intro-hyperframes"
 OUTRO_HF = ROOT / "outro-hyperframes"
+BUMPER_HF = ROOT / "bumper-hyperframes"
+BADGE_HF = ROOT / "overlay-hyperframes" / "speed-badge"
+AUDIO_DIR = ROOT / "assets" / "audio"
 FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 FONT_MONO = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf"
 
@@ -164,7 +167,22 @@ def caption_vf(text: str, start: float = 0.5, duration: float = 4) -> str:
     end = start + duration
     return (
         f"drawtext=fontfile={FONT}:text='{t}':x=(w-text_w)/2:y=h-90:"
-        f"fontsize=34:fontcolor=white:box=1:boxcolor=0x000000aa:boxborderw=12:"
+        f"fontsize=34:fontcolor=white:box=1:boxcolor=0x000000dd:boxborderw=14:"
+        f"enable='between(t,{start},{end})'"
+    )
+
+
+def caption_panel_vf(
+    text: str, layout: str, panel_name: str, start: float = 0.3, duration: float = 2,
+) -> str:
+    """Caption centered on a panel — renders above STALL underlay."""
+    x, w = panel(layout, panel_name)
+    tx = f"{x}+({w}-text_w)/2"
+    t = esc(text)
+    end = start + duration
+    return (
+        f"drawtext=fontfile={FONT}:text='{t}':x={tx}:y=(h-text_h)/2+40:"
+        f"fontsize=30:fontcolor=white:box=1:boxcolor=0x000000ee:boxborderw=16:"
         f"enable='between(t,{start},{end})'"
     )
 
@@ -204,41 +222,48 @@ def tetris_labels_vf(layout: str) -> str:
     return ",".join(parts)
 
 
-def build_extra_vf(seg: dict) -> str:
-    extra: list[str] = []
+def build_extra_vf(seg: dict, static_speed_badge: bool = False) -> str:
+    """Underlays first, captions last — captions stay above STALL panels."""
+    under: list[str] = []
+    captions: list[str] = []
     layout = seg.get("layout", "grok_md_opus")
 
-    if seg.get("caption"):
-        dur = seg.get("out", seg["t"]) - 0.3
-        extra.append(caption_vf(seg["caption"], 0.3, max(dur, 2)))
-
     if seg.get("overlay") == "success":
-        extra.append(success_overlay_vf(seg["timer"], seg["panel"], layout))
+        under.append(success_overlay_vf(seg["timer"], seg["panel"], layout))
     elif seg.get("overlay") == "fail":
-        extra.append(fail_overlay_vf(layout, seg.get("panel", "opus")))
+        under.append(fail_overlay_vf(layout, seg.get("panel", "opus")))
     elif seg.get("overlay") == "reset":
-        extra.append(caption_vf(seg.get("caption", "Reset"), 0.2, seg.get("out", 5) - 0.2))
-
-    if seg.get("speed"):
-        extra.append(speed_badge_vf(seg["speed"]))
+        under.append(caption_vf(seg.get("caption", "Reset"), 0.2, seg.get("out", 5) - 0.2))
 
     if seg.get("opus_timer"):
-        extra.append(opus_elapsed_timer_vf(
+        under.append(opus_elapsed_timer_vf(
             layout, seg["opus_timer"]["start"], seg["opus_timer"]["mult"],
         ))
 
     if seg.get("timers"):
         if "grok" in LAYOUTS[layout]:
-            extra.append(panel_timer_vf(layout, "grok", "Grok"))
+            under.append(panel_timer_vf(layout, "grok", "Grok"))
         if "opus" in LAYOUTS[layout]:
-            extra.append(panel_timer_vf(layout, "opus", "Opus"))
+            under.append(panel_timer_vf(layout, "opus", "Opus"))
         if "sonnet" in LAYOUTS[layout]:
-            extra.append(panel_timer_vf(layout, "sonnet", "Sonnet"))
+            under.append(panel_timer_vf(layout, "sonnet", "Sonnet"))
 
     if seg.get("tetris_labels"):
-        extra.append(tetris_labels_vf(layout))
+        under.append(tetris_labels_vf(layout))
 
-    return ",".join(extra)
+    if static_speed_badge and seg.get("speed"):
+        under.append(speed_badge_vf(seg["speed"]))
+
+    if seg.get("caption") and seg.get("overlay") != "reset":
+        dur = seg.get("out", seg["t"]) - 0.3
+        if seg.get("caption_panel"):
+            captions.append(caption_panel_vf(
+                seg["caption"], layout, seg["caption_panel"], 0.3, max(dur, 2),
+            ))
+        else:
+            captions.append(caption_vf(seg["caption"], 0.3, max(dur, 2)))
+
+    return ",".join(under + captions)
 
 
 def extract_segment(
@@ -265,6 +290,10 @@ def extract_segment_1x(
     ])
 
 
+def speed_label(multiplier: float) -> str:
+    return f"x{int(multiplier)}" if multiplier >= 10 else f"x{multiplier:.1f}"
+
+
 def extract_speed_ramp(
     src: Path, parts: list[dict], out: Path, layout: str, grade: dict | None = None,
 ) -> None:
@@ -272,19 +301,22 @@ def extract_speed_ramp(
     temps: list[Path] = []
     for i, part in enumerate(parts):
         mult = part["t"] / part["out"]
-        vf_parts = [speed_badge_vf(mult)]
+        under: list[str] = []
+        caps: list[str] = []
         if part.get("opus_timer", True):
-            vf_parts.append(opus_elapsed_timer_vf(layout, part["timer_start"], mult))
+            under.append(opus_elapsed_timer_vf(layout, part["timer_start"], mult))
         if part.get("caption"):
-            vf_parts.append(caption_vf(part["caption"], 0.2, part["out"] - 0.3))
-        vf = build_vf(",".join(vf_parts), speed=mult, grade=grade)
+            caps.append(caption_vf(part["caption"], 0.2, part["out"] - 0.3))
+        vf = build_vf(",".join(under + caps), speed=mult, grade=grade)
         tmp = TMP / f"_ramp_{out.stem}_{i}.mp4"
         run([
             "ffmpeg", "-y", "-ss", str(part["ss"]), "-i", str(src), "-t", str(part["t"]),
             "-vf", vf, "-an", "-t", str(part["out"]),
             *x264_args(20, "yuv420p"), str(tmp),
         ])
-        temps.append(tmp)
+        composited = TMP / f"_ramp_{out.stem}_{i}_badge.mp4"
+        composite_speed_badge(tmp, speed_label(mult), composited)
+        temps.append(composited)
 
     list_file = TMP / f"_ramp_{out.stem}.txt"
     list_file.write_text("\n".join(f"file '{p}'" for p in temps))
@@ -294,24 +326,220 @@ def extract_speed_ramp(
     ])
 
 
-def render_hyperframes(hf_dir: Path, out: Path, duration: int, label: str) -> bool:
+def render_hyperframes(
+    hf_dir: Path,
+    out: Path,
+    duration: float,
+    label: str,
+    *,
+    variables: dict | None = None,
+    fmt: str = "mp4",
+) -> bool:
     """HyperFrames: HTML/GSAP → Puppeteer → FFmpeg (roxabi-production stack)."""
     if not (hf_dir / "index.html").exists():
         return False
-    raw = TMP / f"{label}_hyperframes_raw.mp4"
+    ext = "webm" if fmt == "webm" else "mp4"
+    raw = TMP / f"{label}_hyperframes_raw.{ext}"
+    cmd = [
+        "npx", "hyperframes", "render", str(hf_dir),
+        "-o", str(raw), "-f", "30", "-q", "high", "--crf", "18", "--quiet",
+        "--format", fmt,
+    ]
+    if variables:
+        cmd.extend(["--variables", json.dumps(variables)])
     try:
-        run([
-            "npx", "hyperframes", "render", str(hf_dir),
-            "-o", str(raw), "-f", "30", "-q", "high", "--crf", "18", "--quiet",
-        ])
-        run([
-            "ffmpeg", "-y", "-i", str(raw), "-t", str(duration), "-an",
-            *x264_args(20, "yuv420p"), str(out),
-        ])
+        run(cmd)
+        trim = ["ffmpeg", "-y", "-i", str(raw), "-t", str(duration), "-an"]
+        if fmt == "mp4":
+            trim.extend(x264_args(20, "yuv420p"))
+        else:
+            trim.extend(["-c:v", "libvpx-vp9", "-pix_fmt", "yuva420p", "-b:v", "2M"])
+        trim.append(str(out))
+        run(trim)
         return True
     except subprocess.CalledProcessError as exc:
-        print(f"HyperFrames {label} failed ({exc}), using FFmpeg fallback", file=sys.stderr)
+        print(f"HyperFrames {label} failed ({exc})", file=sys.stderr)
         return False
+
+
+_BADGE_CACHE: dict[str, Path] = {}
+
+
+def ensure_speed_badge_overlay(label: str) -> Path | None:
+    if label in _BADGE_CACHE and _BADGE_CACHE[label].exists():
+        return _BADGE_CACHE[label]
+    out_webm = TMP / f"badge_{label.replace('.', '_')}.webm"
+    if render_hyperframes(
+        BADGE_HF, out_webm, 2.0, f"badge_{label}",
+        variables={"label": label}, fmt="webm",
+    ):
+        _BADGE_CACHE[label] = out_webm
+        return out_webm
+    out_mp4 = TMP / f"badge_{label.replace('.', '_')}.mp4"
+    if render_hyperframes(
+        BADGE_HF, out_mp4, 2.0, f"badge_{label}",
+        variables={"label": label}, fmt="mp4",
+    ):
+        _BADGE_CACHE[label] = out_mp4
+        return out_mp4
+    return None
+
+
+def composite_speed_badge(segment: Path, label: str, out: Path) -> None:
+    badge = ensure_speed_badge_overlay(label)
+    if not badge:
+        vf = speed_badge_vf(float(label.lstrip("x")))
+        run([
+            "ffmpeg", "-y", "-i", str(segment),
+            "-vf", vf, "-an", *x264_args(20, "yuv420p"), str(out),
+        ])
+        return
+    if badge.suffix == ".webm":
+        filt = (
+            "[1]format=rgba,colorchannelmixer=aa=1[badge];"
+            "[0][badge]overlay=W-w-30:24:shortest=1"
+        )
+    else:
+        filt = "[0][1]overlay=W-w-30:24:shortest=1"
+    run([
+        "ffmpeg", "-y", "-i", str(segment),
+        "-stream_loop", "-1", "-i", str(badge),
+        "-filter_complex", filt,
+        "-an", "-shortest",
+        *x264_args(20, "yuv420p"), str(out),
+    ])
+
+
+def _probe_duration(path: Path) -> float:
+    out = subprocess.check_output([
+        "ffprobe", "-v", "error", "-show_entries", "format=duration",
+        "-of", "default=noprint_wrappers=1:nokey=1", str(path),
+    ], text=True).strip()
+    return float(out)
+
+
+def make_bumper(out: Path, duration: float = 0.5) -> None:
+    if not render_hyperframes(BUMPER_HF, out, duration, "bumper"):
+        r = ROXABI
+        run([
+            "ffmpeg", "-y", "-f", "lavfi",
+            "-i", f"color=c={r['bg']}:s=1920x1080:d={duration}:r=30",
+            "-vf", (
+                f"drawtext=fontfile={FONT}:text='/':x=(w-text_w)/2:y=(h-text_h)/2:"
+                f"fontsize=120:fontcolor={r['accent']}"
+            ),
+            "-an", *x264_args(20, "yuv420p"), str(out),
+        ])
+
+
+def generate_audio_assets() -> dict[str, Path]:
+    AUDIO_DIR.mkdir(parents=True, exist_ok=True)
+    assets: dict[str, Path] = {}
+
+    def synth(name: str, cmd: list[str]) -> Path:
+        path = AUDIO_DIR / f"{name}.wav"
+        if not path.exists():
+            run(cmd)
+        assets[name] = path
+        return path
+
+    dur = 70
+    synth("bgm", [
+        "ffmpeg", "-y",
+        "-f", "lavfi", "-i", f"sine=frequency=55:duration={dur}",
+        "-f", "lavfi", "-i", f"sine=frequency=82.5:duration={dur}",
+        "-f", "lavfi", "-i", f"anoisesrc=d={dur}:color=brown:amplitude=0.015",
+        "-filter_complex",
+        "[0][1]amix=inputs=2:duration=first[tones];"
+        "[tones][2]amix=inputs=2:duration=first,"
+        "lowpass=f=400,volume=0.09,afade=t=in:d=2,afade=t=out:st=68:d=2",
+        "-ar", "48000", "-ac", "2", str(AUDIO_DIR / "bgm.wav"),
+    ])
+    synth("tap", [
+        "ffmpeg", "-y", "-f", "lavfi", "-i", "sine=frequency=1400:duration=0.05",
+        "-f", "lavfi", "-i", "sine=frequency=2100:duration=0.03",
+        "-filter_complex",
+        "[0][1]amix=inputs=2:duration=first,afade=t=out:st=0.02:d=0.03,volume=0.45",
+        "-ar", "48000", str(AUDIO_DIR / "tap.wav"),
+    ])
+    synth("whoosh", [
+        "ffmpeg", "-y", "-f", "lavfi", "-i", "anoisesrc=d=0.25:color=pink:amplitude=0.12",
+        "-af", "lowpass=f=1800,highpass=f=200,afade=t=in:d=0.03,afade=t=out:st=0.15:d=0.1,volume=0.35",
+        "-ar", "48000", str(AUDIO_DIR / "whoosh.wav"),
+    ])
+    synth("chime", [
+        "ffmpeg", "-y", "-f", "lavfi", "-i", "sine=frequency=880:duration=0.35",
+        "-f", "lavfi", "-i", "sine=frequency=1320:duration=0.25",
+        "-filter_complex",
+        "[0][1]amix=inputs=2:duration=first,afade=t=out:st=0.15:d=0.2,volume=0.3",
+        "-ar", "48000", str(AUDIO_DIR / "chime.wav"),
+    ])
+    synth("tension", [
+        "ffmpeg", "-y", "-f", "lavfi", "-i", "sine=frequency=220:duration=0.4",
+        "-af", "afade=t=out:st=0.2:d=0.2,volume=0.22",
+        "-ar", "48000", str(AUDIO_DIR / "tension.wav"),
+    ])
+    return assets
+
+
+def build_timeline(segments: list[dict]) -> tuple[list[dict], float]:
+    timeline: list[dict] = []
+    t = 0.0
+    for seg in segments:
+        if seg.get("type") == "generated":
+            dur = float(seg["duration"])
+        elif seg.get("type") == "speed_ramp":
+            dur = sum(p["out"] for p in seg["parts"])
+        else:
+            dur = float(seg.get("out", seg["t"]))
+        timeline.append({"id": seg["id"], "start": t, "duration": dur})
+        t += dur
+    return timeline, t
+
+
+def mix_audio(
+    video: Path, out: Path, timeline: list[dict],
+    audio_cfg: dict, assets: dict[str, Path],
+) -> None:
+    bgm_vol = audio_cfg.get("bgm_volume", 0.08)
+    bgm = assets["bgm"]
+    total = _probe_duration(video)
+
+    seg_start = {row["id"]: row["start"] for row in timeline}
+    sfx_events: list[tuple[float, Path, float]] = []
+    for ev in audio_cfg.get("sfx", []):
+        sid = ev["segment"]
+        if sid not in seg_start:
+            continue
+        t0 = seg_start[sid] + ev.get("offset", 0)
+        sound = assets.get(ev["sound"])
+        if sound:
+            sfx_events.append((t0, sound, ev.get("volume", 0.4)))
+
+    inputs = ["-i", str(video), "-i", str(bgm)]
+    for _, sfx, _ in sfx_events:
+        inputs.extend(["-i", str(sfx)])
+
+    filters = [f"[1]atrim=0:{total},asetpts=PTS-STARTPTS,volume={bgm_vol}[bgm]"]
+    mix_labels = ["[bgm]"]
+    for i, (t0, _, vol) in enumerate(sfx_events):
+        idx = i + 2
+        delay = int(t0 * 1000)
+        filters.append(f"[{idx}]adelay={delay}|{delay},volume={vol}[s{i}]")
+        mix_labels.append(f"[s{i}]")
+
+    n = len(mix_labels)
+    filters.append(
+        f"{''.join(mix_labels)}amix=inputs={n}:duration=first:dropout_transition=0[aout]"
+    )
+
+    run([
+        "ffmpeg", "-y", *inputs,
+        "-filter_complex", ";".join(filters),
+        "-map", "0:v:0", "-map", "[aout]",
+        "-c:v", "copy", "-c:a", "aac", "-b:a", "128k",
+        "-shortest", str(out),
+    ])
 
 
 def make_intro_ffmpeg_fallback(out: Path, duration: int) -> None:
@@ -418,13 +646,20 @@ def concat(parts: list[Path], out: Path) -> None:
 
 
 def export_distribution(master: Path, hq: Path, compat: Path) -> None:
+    has_audio = subprocess.run(
+        ["ffprobe", "-v", "error", "-select_streams", "a", "-show_entries",
+         "stream=codec_type", "-of", "csv=p=0", str(master)],
+        capture_output=True, text=True,
+    ).stdout.strip() == "audio"
+
+    audio_args = ["-c:a", "aac", "-b:a", "128k"] if has_audio else ["-an"]
     run([
         "ffmpeg", "-y", "-i", str(master),
-        "-an", *x264_args(18, "yuv444p", faststart=True), str(hq),
+        *x264_args(18, "yuv444p", faststart=True), *audio_args, str(hq),
     ])
     run([
         "ffmpeg", "-y", "-i", str(master),
-        "-an", *x264_args(23, "yuv420p", faststart=True), str(compat),
+        *x264_args(23, "yuv420p", faststart=True), *audio_args, str(compat),
     ])
 
 
@@ -437,10 +672,18 @@ def process_segment(src: Path, seg: dict, out: Path, grade: dict | None = None) 
 
     extra = build_extra_vf(seg)
     out_dur = seg.get("out", seg["t"])
+    tmp = TMP / f"_{seg['id']}_raw.mp4"
     if abs(seg["t"] - out_dur) < 0.5:
-        extract_segment_1x(src, seg["ss"], seg["t"], out, extra, grade=grade)
+        extract_segment_1x(src, seg["ss"], seg["t"], tmp, extra, grade=grade)
     else:
-        extract_segment(src, seg["ss"], seg["t"], out, out_dur, extra, grade=grade)
+        extract_segment(src, seg["ss"], seg["t"], tmp, out_dur, extra, grade=grade)
+
+    if seg.get("speed"):
+        composite_speed_badge(tmp, speed_label(seg["speed"]), out)
+        tmp.unlink(missing_ok=True)
+    else:
+        out.unlink(missing_ok=True)
+        tmp.rename(out)
 
 
 def main() -> int:
@@ -461,12 +704,15 @@ def main() -> int:
         out = TMP / f"{sid}.mp4"
 
         if seg.get("type") == "generated":
-            if sid == "intro":
+            variant = seg.get("variant", sid)
+            if variant == "intro":
                 make_intro(out, seg["duration"])
-            elif sid == "outro":
+            elif variant == "outro":
                 make_outro(out, seg["duration"])
+            elif variant == "bumper":
+                make_bumper(out, seg["duration"])
             else:
-                raise ValueError(f"unknown generated segment: {sid}")
+                raise ValueError(f"unknown generated segment: {variant}")
             parts.append(out)
             continue
 
@@ -474,8 +720,16 @@ def main() -> int:
         process_segment(src, seg, out, grade=grade)
         parts.append(out)
 
+    master_silent = TMP / "master_silent.mp4"
+    concat(parts, master_silent)
+
+    timeline, _ = build_timeline(cfg["segments"])
+    audio_assets = generate_audio_assets()
     master = TMP / "master.mp4"
-    concat(parts, master)
+    if cfg.get("audio"):
+        mix_audio(master_silent, master, timeline, cfg["audio"], audio_assets)
+    else:
+        master = master_silent
 
     hq = PROJECT / cfg.get("output", "out/tetris-comparison.mp4")
     compat = PROJECT / cfg.get("output_compat", "out/tetris-comparison-compat.mp4")

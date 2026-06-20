@@ -11,14 +11,28 @@
     "timer": "timer-a",
     "ellipsis": "opus-accel-ramp",
     "intro": "intro-hyperframes-roxabi",
-    "outro": "outro-hyperframes-roxabi"
+    "outro": "outro-hyperframes-roxabi",
+    "bumpers": "hyperframes-roxabi",
+    "speed_badge": "hyperframes-gsap-pulse"
   },
   "color_grade": {
     "profile": "moody_dark",
     "intensity": 0.55
   },
+  "audio": {
+    "bgm_volume": 0.07,
+    "sfx": [
+      { "segment": "grok_done", "offset": 0.15, "sound": "chime", "volume": 0.32 },
+      { "segment": "stall", "offset": 0.05, "sound": "tension", "volume": 0.24 },
+      { "segment": "sonnet_open", "offset": 0.1, "sound": "tap", "volume": 0.5 },
+      { "segment": "sonnet_done", "offset": 0.1, "sound": "chime", "volume": 0.28 },
+      { "segment": "bumper_grok", "offset": 0.02, "sound": "whoosh", "volume": 0.32 },
+      { "segment": "bumper_sonnet", "offset": 0.02, "sound": "whoosh", "volume": 0.32 },
+      { "segment": "bumper_opus", "offset": 0.02, "sound": "whoosh", "volume": 0.32 }
+    ]
+  },
   "segments": [
-    { "id": "intro", "type": "generated", "duration": 5 },
+    { "id": "intro", "type": "generated", "variant": "intro", "duration": 5, "no_grade": true },
 
     {
       "id": "brief",
@@ -52,6 +66,8 @@
       "caption": "Grok termine en 2 min"
     },
 
+    { "id": "bumper_grok", "type": "generated", "variant": "bumper", "duration": 0.5, "no_grade": true },
+
     {
       "id": "stall",
       "ss": 212,
@@ -71,16 +87,17 @@
       "layout": "grok_md_opus_sonnet",
       "overlay": "fail",
       "panel": "opus",
-      "caption": "Lancement Sonnet - 4 fenetres"
+      "caption": "Lancement Sonnet - 4 fenetres",
+      "caption_panel": "opus"
     },
 
     {
       "id": "phase_four",
       "ss": 228,
       "t": 100,
-      "out": 3,
+      "out": 2,
       "layout": "grok_md_opus_sonnet",
-      "speed": 33,
+      "speed": 50,
       "timers": true
     },
 
@@ -125,15 +142,17 @@
       "caption": "Sonnet - 2:10"
     },
 
+    { "id": "bumper_sonnet", "type": "generated", "variant": "bumper", "duration": 0.5, "no_grade": true },
+
     {
       "id": "opus_accel",
       "type": "speed_ramp",
       "layout": "grok_opus_sonnet",
       "parts": [
-        { "ss": 710, "t": 550, "out": 2.5, "timer_start": 710, "caption": "Opus continue..." },
-        { "ss": 1260, "t": 550, "out": 2.5, "timer_start": 1260 },
-        { "ss": 1810, "t": 500, "out": 2.5, "timer_start": 1810 },
-        { "ss": 2310, "t": 350, "out": 2.5, "timer_start": 2310 }
+        { "ss": 710, "t": 550, "out": 2.25, "timer_start": 710, "caption": "Opus continue..." },
+        { "ss": 1260, "t": 550, "out": 2.25, "timer_start": 1260 },
+        { "ss": 1810, "t": 500, "out": 2.25, "timer_start": 1810 },
+        { "ss": 2310, "t": 350, "out": 2.25, "timer_start": 2310 }
       ]
     },
 
@@ -158,16 +177,18 @@
       "caption": "Opus - 50 min"
     },
 
+    { "id": "bumper_opus", "type": "generated", "variant": "bumper", "duration": 0.5, "no_grade": true },
+
     {
       "id": "showcase",
       "ss": 3200,
       "t": 10,
-      "out": 6,
+      "out": 5,
       "layout": "grok_opus_sonnet",
       "tetris_labels": true,
       "caption": "Les 3 Tetris en action"
     },
 
-    { "id": "outro", "type": "generated", "duration": 6 }
+    { "id": "outro", "type": "generated", "variant": "outro", "duration": 6, "no_grade": true }
   ]
 }

@@ -3,3 +3,5 @@ node_modules/
 .env.wrangler/
 out/_tmp/
 .wrangler/
+video/__pycache__/
+video/assets/audio/

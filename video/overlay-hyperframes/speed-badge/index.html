@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <link rel="stylesheet" href="../../hyperframes-shared.css" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      :root { --accent: #f0b429; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        width: 1920px; height: 1080px; overflow: hidden;
+        background: transparent;
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+      }
+      .badge {
+        position: absolute; top: 24px; right: 30px;
+        padding: 10px 18px; border-radius: 8px;
+        background: rgba(0, 0, 0, 0.82);
+        border: 2px solid var(--accent);
+        font-size: 38px; font-weight: 700; color: var(--accent);
+        transform-origin: center center;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="2"
+      data-width="1920"
+      data-height="1080"
+      data-composition-variables='{"label":"x33"}'
+    >
+      <div id="scene" class="clip" data-start="0" data-duration="2" data-track-index="1">
+        <div class="badge" id="badge">x33</div>
+      </div>
+    </div>
+    <script>
+      const vars = window.__hyperframes?.getVariables?.() || { label: "x33" };
+      document.getElementById("badge").textContent = vars.label || "x33";
+
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true, repeat: 2 });
+      tl.to("#badge", {
+        scale: 1.14,
+        boxShadow: "0 0 24px rgba(240,180,41,0.55)",
+        duration: 0.35,
+        yoyo: true,
+        repeat: 3,
+        ease: "sine.inOut",
+      }, 0);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>
