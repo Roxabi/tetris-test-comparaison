@@ -1,4 +1,4 @@
-# Tetris Test Comparaison
+# Tetris-Test-Comparaison
 
 Showcase bilingue (FR/EN) comparant trois agents IA sur le même brief Tetris HTML :
 

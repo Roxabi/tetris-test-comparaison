@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plan vidéo · Tetris Comparaison</title>
+  <style>
+    :root {
+      --bg: #f4f5f7; --surface: #fff; --border: #d8dde6; --text: #12151c;
+      --muted: #5f6b7e; --accent: #2f6fed; --accent-soft: #e8f0ff;
+      --grok: #f97316; --opus: #a855f7; --sonnet: #22c55e;
+      --danger: #dc2626; --success: #16a34a;
+      --mono: ui-monospace, Consolas, monospace;
+      --radius: 12px;
+    }
+    [data-theme="dark"] {
+      --bg: #0b0d12; --surface: #151820; --border: #2b3345; --text: #e8ecf4;
+      --muted: #8b95a8; --accent: #5b8def; --accent-soft: #1a2540;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.55; }
+    a { color: var(--accent); }
+    header { border-bottom: 1px solid var(--border); padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .75rem; }
+    h1 { font-size: 1.35rem; }
+    .wrap { max-width: 1060px; margin: 0 auto; padding: 1.5rem; }
+    h2 { font-size: 1.15rem; margin: 2rem 0 .75rem; padding-bottom: .4rem; border-bottom: 1px solid var(--border); }
+    h3 { font-size: .95rem; margin: 1.25rem 0 .5rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+    p, li { font-size: .92rem; }
+    .meta { color: var(--muted); font-size: .85rem; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.15rem; margin-bottom: 1rem; }
+    table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+    th, td { text-align: left; padding: .5rem .6rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th { color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; }
+    .tag { display: inline-block; font-size: .68rem; font-weight: 700; padding: .12rem .45rem; border-radius: 999px; margin-right: .25rem; }
+    .tag-grok { background: #ffedd5; color: #9a3412; }
+    .tag-opus { background: #f3e8ff; color: #6b21a8; }
+    .tag-sonnet { background: #dcfce7; color: #166534; }
+    .tag-all { background: var(--accent-soft); color: var(--accent); }
+    .tag-fast { background: #fef3c7; color: #92400e; }
+    .tag-slow { background: #fee2e2; color: #991b1b; }
+    [data-theme="dark"] .tag-grok { background: #7c2d12; color: #fdba74; }
+    [data-theme="dark"] .tag-opus { background: #581c87; color: #d8b4fe; }
+    [data-theme="dark"] .tag-sonnet { background: #14532d; color: #86efac; }
+
+    .choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 1rem 0; }
+    @media (max-width: 900px) { .choices { grid-template-columns: 1fr; } }
+    .choice { border: 2px solid var(--border); border-radius: var(--radius); padding: .85rem; cursor: pointer; transition: border-color .15s; }
+    .choice:hover { border-color: var(--accent); }
+    .choice.selected { border-color: var(--accent); background: var(--accent-soft); }
+    .choice h4 { font-size: .88rem; margin-bottom: .5rem; }
+    .choice p { font-size: .78rem; color: var(--muted); }
+
+    /* Animation previews */
+    .preview-box {
+      position: relative; height: 110px; border-radius: 8px; overflow: hidden;
+      background: #1a1f2e; margin-bottom: .5rem; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px;
+    }
+    .panel { position: relative; background: #252b3d; display: flex; align-items: flex-end; justify-content: center; padding: .4rem; font-size: .6rem; color: #8b95a8; }
+    .panel.grok { border-top: 2px solid var(--grok); }
+    .panel.opus { border-top: 2px solid var(--opus); }
+    .panel.sonnet { border-top: 2px solid var(--sonnet); }
+
+    .timer { position: absolute; top: 4px; right: 4px; font-family: var(--mono); font-size: .65rem; background: rgba(0,0,0,.6); color: #fff; padding: .1rem .35rem; border-radius: 4px; }
+
+    /* Style A: Badge succès */
+    .style-a .panel.done::after {
+      content: '✓ 2:00'; position: absolute; inset: 0; background: rgba(0,0,0,.72);
+      display: grid; place-items: center; color: #4ade80; font-weight: 700; font-size: .75rem;
+      animation: fadeIn .6s ease;
+    }
+    /* Style B: Flash + compteur */
+    .style-b .panel.done::after {
+      content: 'TERMINÉ'; position: absolute; inset: 0; background: rgba(34,197,94,.25);
+      display: grid; place-items: center; color: #fff; font-weight: 800; font-size: .7rem;
+      animation: pulse 1s ease infinite;
+    }
+    /* Style C: Minimal grisé */
+    .style-c .panel.done { filter: grayscale(.85) brightness(.55); }
+    .style-c .panel.done::after {
+      content: '2:00'; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+      font-family: var(--mono); font-size: 1rem; color: #fff; font-weight: 700;
+    }
+
+    /* Fail styles */
+    .fail-a .panel.fail::after {
+      content: '⏹ Arrêté'; position: absolute; inset: 0; background: rgba(220,38,38,.35);
+      display: grid; place-items: center; color: #fff; font-size: .7rem; font-weight: 700;
+    }
+    .fail-b .panel.fail::after {
+      content: 'STALL'; position: absolute; inset: 0; background: rgba(0,0,0,.8);
+      display: grid; place-items: center; color: #f87171; font-size: .8rem; font-weight: 800;
+      letter-spacing: .08em;
+    }
+    .fail-c .panel.fail::after {
+      content: 'Claude bloqué — relance'; position: absolute; bottom: 0; left: 0; right: 0;
+      background: #7f1d1d; color: #fecaca; font-size: .55rem; padding: .3rem; text-align: center;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .6; } }
+
+    .timeline-bar { display: flex; height: 28px; border-radius: 6px; overflow: hidden; margin: 1rem 0; font-size: .6rem; color: #fff; }
+    .timeline-bar span { display: flex; align-items: center; justify-content: center; padding: 0 .3rem; white-space: nowrap; overflow: hidden; }
+    .tl-intro { background: #475569; flex: 12; }
+    .tl-race { background: var(--grok); flex: 30; }
+    .tl-grok-done { background: var(--success); flex: 10; }
+    .tl-opus-stall { background: var(--opus); flex: 15; }
+    .tl-sonnet { background: var(--sonnet); flex: 15; }
+    .tl-results { background: var(--accent); flex: 10; }
+    .tl-outro { background: #334155; flex: 8; }
+
+    .question { background: #fef9c3; border: 1px solid #fde047; border-radius: 8px; padding: .75rem 1rem; margin: 1rem 0; font-size: .88rem; }
+    [data-theme="dark"] .question { background: #422006; border-color: #a16207; color: #fef08a; }
+
+    .ctrl-btn { border: 1px solid var(--border); background: var(--surface); padding: .35rem .7rem; border-radius: 999px; font-size: .8rem; cursor: pointer; }
+    .note { font-size: .8rem; color: var(--muted); font-style: italic; }
+    code { font-family: var(--mono); font-size: .85em; background: var(--accent-soft); padding: .1rem .3rem; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Plan vidéo · Tetris Comparaison</h1>
+      <p class="meta">Source : <code>2026-06-20 10-43-40.mp4</code> · 59 min · 2560×1440 · 60 fps → cible <strong>~2:00</strong></p>
+    </div>
+    <button class="ctrl-btn" id="theme-toggle" type="button">Thème</button>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <p><strong>Objectif :</strong> en ~2 minutes, raconter l'expérience complète — brief identique, course Grok vs Opus, incidents Claude, résultats des 3 Tetris, synthèse + lien <a href="https://tetris.roxabi.dev">tetris.roxabi.dev</a>.</p>
+      <p class="note" style="margin-top:.5rem">Ordre des panneaux dans la vidéo finale : <strong>Grok (gauche) · Opus (centre) · Sonnet (droite)</strong></p>
+    </div>
+
+    <h2>Repères validés (vidéo source)</h2>
+    <div class="card">
+      <table>
+        <thead><tr><th>Source</th><th>Événement</th><th>Panneau</th></tr></thead>
+        <tbody>
+          <tr><td><code>~3:10</code></td><td>Grok terminé</td><td><span class="tag tag-grok">Grok</span> ~2 min</td></tr>
+          <tr><td><code>3:40</code></td><td>Opus n'avance pas → nouveau terminal Sonnet</td><td><span class="tag tag-sonnet">Sonnet</span> démarre</td></tr>
+          <tr><td><code>5:35</code></td><td>Reset Opus — on recommence à 0</td><td><span class="tag tag-opus">Opus</span></td></tr>
+          <tr><td><code>9:35</code></td><td>Stop Sonnet (bug) — reprise propre</td><td><span class="tag tag-sonnet">Sonnet</span></td></tr>
+          <tr><td><code>11:50</code></td><td>Sonnet terminé</td><td><span class="tag tag-sonnet">Sonnet</span> ~2:10 (run propre)</td></tr>
+          <tr><td><code>44:20</code></td><td>Workflow terminé — phase finalisation</td><td><span class="tag tag-opus">Opus</span></td></tr>
+          <tr><td><code>50:30</code></td><td>Opus terminé</td><td><span class="tag tag-opus">Opus</span> ~50 min</td></tr>
+          <tr><td><code>59:00</code></td><td>Showcase résultats Grok · Opus · Sonnet</td><td><span class="tag tag-all">tous</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Timeline cible (~2:00)</h2>
+    <div class="timeline-bar" title="Durée finale estimée">
+      <span class="tl-intro">Intro 12s</span>
+      <span class="tl-race">Course 25s</span>
+      <span class="tl-grok-done">Grok ✓ 8s</span>
+      <span class="tl-opus-stall">Incidents 22s</span>
+      <span class="tl-sonnet">Sonnet ✓ 6s</span>
+      <span class="tl-results">Opus 33min 15s</span>
+      <span class="tl-outro">Showcase+fin 22s</span>
+    </div>
+
+    <h2>Script détaillé — source → rendu</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Rendu final</th>
+          <th>Source (vidéo brute)</th>
+          <th>Vitesse</th>
+          <th>Contenu & overlays</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td><strong>0:00–0:12</strong><br>Carte titre animée</td>
+          <td>Généré (roxabi-production)</td>
+          <td>—</td>
+          <td>
+            <span class="tag tag-all">overlay</span>
+            « Tetris HTML — même brief, 3 IA »<br>
+            Sous-titre : 1 fichier autonome, pas de CDN, pas de build<br>
+            Logos / couleurs : Grok · Opus · Sonnet
+          </td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td><strong>0:12–0:25</strong><br>Le brief</td>
+          <td><code>0:00–0:30</code></td>
+          <td><span class="tag tag-fast">1×</span></td>
+          <td>
+            Split 2 panneaux (Grok | Opus) — DEMANDE.md visible<br>
+            Zoom sur le prompt identique en bas : « Réalise le tetris conforme… »<br>
+            Texte overlay : « Même consigne pour tous »
+          </td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td><strong>0:25–0:50</strong><br>La course</td>
+          <td><code>0:30–3:10</code></td>
+          <td><span class="tag tag-fast">×25–×40</span></td>
+          <td>
+            <span class="tag tag-grok">Grok</span> timer · code qui défile<br>
+            <span class="tag tag-opus">Opus</span> timer · bloqué « Architecting… »<br>
+            Accélération ×30 visible en coin
+          </td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td><strong>0:50–0:58</strong><br>Grok ✓</td>
+          <td><code>3:00–3:15</code></td>
+          <td><span class="tag tag-fast">1×</span> freeze</td>
+          <td>
+            « Les tests passent. Tetris prêt. »<br>
+            <strong>Animation succès</strong> → grisage · timer <strong>2:00</strong>
+          </td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td><strong>0:58–1:04</strong><br>Opus bloqué → Sonnet</td>
+          <td><code>3:35–3:45</code> (<strong>3:40</strong>)</td>
+          <td><span class="tag tag-fast">1×</span></td>
+          <td>
+            Overlay : « Opus n'avance pas »<br>
+            3ᵉ panneau : terminal Sonnet (<code>tetris-claude2</code>) s'ouvre<br>
+            Timers : Opus ~3:40 · Sonnet démarre
+          </td>
+        </tr>
+        <tr>
+          <td>6</td>
+          <td><strong>1:04–1:08</strong><br>Reset Opus</td>
+          <td><code>5:30–5:40</code> (<strong>5:35</strong>)</td>
+          <td><span class="tag tag-fast">1×</span></td>
+          <td>
+            <strong>Animation reset</strong> sur panneau Opus<br>
+            Texte : « Reset — on recommence à zéro »<br>
+            Timer Opus remis à 0:00
+          </td>
+        </tr>
+        <tr>
+          <td>7</td>
+          <td><strong>1:08–1:13</strong><br>Stop Sonnet</td>
+          <td><code>9:30–9:40</code> (<strong>9:35</strong>)</td>
+          <td><span class="tag tag-fast">1×</span></td>
+          <td>
+            <strong>Animation arrêt</strong> panneau Sonnet<br>
+            Texte : « Bug — stop pour reprendre proprement »
+          </td>
+        </tr>
+        <tr>
+          <td>8</td>
+          <td><strong>1:13–1:19</strong><br>Sonnet ✓</td>
+          <td><code>11:45–11:55</code> (<strong>11:50</strong>)</td>
+          <td><span class="tag tag-fast">1×</span> freeze</td>
+          <td>
+            Livrable prêt · <strong>Animation succès</strong> → grisage<br>
+            Timer figé : <strong>~2:10</strong> (run propre)
+          </td>
+        </tr>
+        <tr>
+          <td>9</td>
+          <td><strong>1:19–1:24</strong><br>Ellipsis Opus</td>
+          <td><code>11:50–44:20</code> (32 min)</td>
+          <td><span class="tag tag-slow">×60 + cut</span></td>
+          <td>
+            Carte : « Pendant ce temps, Opus tourne encore… »<br>
+            Flash 2 s de workflow / subagents accélérés
+          </td>
+        </tr>
+        <tr>
+          <td>10</td>
+          <td><strong>1:24–1:29</strong><br>Finalisation Opus</td>
+          <td><code>44:15–44:25</code> (<strong>44:20</strong>)</td>
+          <td><span class="tag tag-fast">1×</span></td>
+          <td>
+            « Workflow terminé » — phase finalisation<br>
+            Checklist / tests Playwright qui apparaissent
+          </td>
+        </tr>
+        <tr>
+          <td>11</td>
+          <td><strong>1:29–1:36</strong><br>Opus ✓</td>
+          <td><code>50:25–50:35</code> (<strong>50:30</strong>)</td>
+          <td><span class="tag tag-fast">1×</span> freeze</td>
+          <td>
+            Checklist verte · timer <strong>50:30</strong><br>
+            Overlay : over-engineering · tests · 1 335 lignes
+          </td>
+        </tr>
+        <tr>
+          <td>12</td>
+          <td><strong>1:36–1:48</strong><br>Showcase</td>
+          <td><code>58:55–59:05</code> (<strong>59:00</strong>)</td>
+          <td><span class="tag tag-fast">1×</span></td>
+          <td>
+            3 jeux navigateur : <strong>Grok · Opus · Sonnet</strong> (gauche → droite)<br>
+            Scores visibles sous chaque panneau
+          </td>
+        </tr>
+        <tr>
+          <td>13</td>
+          <td><strong>1:48–2:00</strong><br>Synthèse</td>
+          <td>Généré (roxabi-production)</td>
+          <td>—</td>
+          <td>
+            Récap : Grok 2 min · Sonnet 2:10 · Opus 50 min<br>
+            Leçon : matcher modèle/effort à la tâche<br>
+            <strong>tetris.roxabi.dev</strong>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="card" style="border-color:var(--success)">
+      <strong>✓ Repères validés</strong> — timestamps fournis le 20 juin 2026. Prochaine étape : choix d'animations ci-dessous, puis génération via roxabi-production.
+    </div>
+
+    <h2>Choix d'animations — clique pour sélectionner</h2>
+    <p class="meta" style="margin-bottom:1rem">Tes sélections sont sauvegardées localement. Dis-moi les IDs (ex. « succès B, échec C »).</p>
+
+    <h3>Animation « succès » (Grok / Sonnet terminé)</h3>
+    <div class="choices" data-group="success">
+      <div class="choice selected" data-id="success-a" data-group="success">
+        <div class="preview-box style-a">
+          <div class="panel grok done"><span class="timer">2:00</span>Grok</div>
+          <div class="panel opus"><span class="timer">12:45</span>Opus</div>
+          <div class="panel sonnet"><span class="timer">—</span>Sonnet</div>
+        </div>
+        <h4>A — Overlay sombre + ✓</h4>
+        <p>Grisage fort, check vert, temps affiché. Sobere, lisible.</p>
+      </div>
+      <div class="choice" data-id="success-b" data-group="success">
+        <div class="preview-box style-b">
+          <div class="panel grok done"><span class="timer">2:00</span>Grok</div>
+          <div class="panel opus"><span class="timer">12:45</span>Opus</div>
+          <div class="panel sonnet"><span class="timer">—</span>Sonnet</div>
+        </div>
+        <h4>B — Flash vert pulsé</h4>
+        <p>« TERMINÉ » en plein écran. Plus dynamique, style « reveal ».</p>
+      </div>
+      <div class="choice" data-id="success-c" data-group="success">
+        <div class="preview-box style-c">
+          <div class="panel grok done"><span class="timer">2:00</span>Grok</div>
+          <div class="panel opus"><span class="timer">12:45</span>Opus</div>
+          <div class="panel sonnet"><span class="timer">—</span>Sonnet</div>
+        </div>
+        <h4>C — Grisage minimal</h4>
+        <p>Pas de texte superflu — juste le timer en gros. Épuré.</p>
+      </div>
+    </div>
+
+    <h3>Animation « échec / stall » (Opus stoppé, Sonnet bug)</h3>
+    <div class="choices" data-group="fail">
+      <div class="choice selected" data-id="fail-a" data-group="fail">
+        <div class="preview-box fail-a">
+          <div class="panel grok done">Grok</div>
+          <div class="panel opus fail"><span class="timer">12:45</span>Opus</div>
+          <div class="panel sonnet">Sonnet</div>
+        </div>
+        <h4>A — Overlay rouge « Arrêté »</h4>
+        <p>Icône stop + texte court. Clair et direct.</p>
+      </div>
+      <div class="choice" data-id="fail-b" data-group="fail">
+        <div class="preview-box fail-b">
+          <div class="panel grok done">Grok</div>
+          <div class="panel opus fail"><span class="timer">12:45</span>Opus</div>
+          <div class="panel sonnet">Sonnet</div>
+        </div>
+        <h4>B — STALL plein écran</h4>
+        <p>Mot « STALL » en rouge. Impact fort, style technique.</p>
+      </div>
+      <div class="choice" data-id="fail-c" data-group="fail">
+        <div class="preview-box fail-c">
+          <div class="panel grok done">Grok</div>
+          <div class="panel opus fail"><span class="timer">12:45</span>Opus</div>
+          <div class="panel sonnet">Sonnet</div>
+        </div>
+        <h4>C — Bandeau explicatif</h4>
+        <p>« Claude bloqué — relance » en bas. Plus pédagogique.</p>
+      </div>
+    </div>
+
+    <h3>Style du minuteur</h3>
+    <div class="choices" data-group="timer">
+      <div class="choice selected" data-id="timer-a" data-group="timer">
+        <h4>A — Coin supérieur, mono</h4>
+        <p><code style="background:#1a1f2e;color:#4ade80;padding:.2rem .5rem;border-radius:4px">02:14</code> discret, une par panneau.</p>
+      </div>
+      <div class="choice" data-id="timer-b" data-group="timer">
+        <h4>B — Barre de progression</h4>
+        <p>Barre colorée sous chaque panneau qui se remplit. Visuel, bon pour la « course ».</p>
+      </div>
+      <div class="choice" data-id="timer-c" data-group="timer">
+        <h4>C — Compteur central géant</h4>
+        <p>Un seul timer principal en overlay — focus sur le contraste Grok vs Opus.</p>
+      </div>
+    </div>
+
+    <h3>Carte « 35 min plus tard… »</h3>
+    <div class="choices" data-group="ellipsis">
+      <div class="choice selected" data-id="ellipsis-a" data-group="ellipsis">
+        <h4>A — Texte simple fond noir</h4>
+        <p>« 35 min plus tard… » fade in/out. Classique, efficace.</p>
+      </div>
+      <div class="choice" data-id="ellipsis-b" data-group="ellipsis">
+        <h4>B — Compteur accéléré</h4>
+        <p>Timer qui défile de 12:00 à 47:00 en 2 secondes. Montre l'échelle du temps.</p>
+      </div>
+      <div class="choice" data-id="ellipsis-c" data-group="ellipsis">
+        <h4>C — Pas de carte — cut direct</h4>
+        <p>Jump cut vers la checklist Opus. Plus rythmé, moins explicatif.</p>
+      </div>
+    </div>
+
+    <h3>Intro & outro (roxabi-production)</h3>
+    <div class="choices" data-group="intro">
+      <div class="choice selected" data-id="intro-a" data-group="intro">
+        <h4>A — Minimal Roxabi</h4>
+        <p>Fond sombre, typo system, accent bleu. Cohérent avec tetris.roxabi.dev.</p>
+      </div>
+      <div class="choice" data-id="intro-b" data-group="intro">
+        <h4>B — Rétro Tetris</h4>
+        <p>Pixel art, blocs qui tombent, nostalgia gaming. Plus fun, moins corporate.</p>
+      </div>
+      <div class="choice" data-id="intro-c" data-group="intro">
+        <h4>C — Split-screen immédiat</h4>
+        <p>Pas de carte titre — on attaque direct sur les panneaux. Plus percutant.</p>
+      </div>
+    </div>
+
+    <div class="card" id="selection-summary" style="margin-top:2rem">
+      <strong>Ta sélection actuelle :</strong>
+      <p id="summary-text" style="margin-top:.5rem;font-family:var(--mono);font-size:.85rem">success-a · fail-a · timer-a · ellipsis-a · intro-a</p>
+      <p class="note" style="margin-top:.5rem">Copie-colle ce résumé dans ta réponse pour valider, ou modifie en cliquant ci-dessus.</p>
+    </div>
+  </div>
+
+  <script>
+    var STORAGE = 'tetris-video-choices';
+    var defaults = { success: 'success-a', fail: 'fail-a', timer: 'timer-a', ellipsis: 'ellipsis-a', intro: 'intro-a' };
+    var saved = {};
+    try { saved = JSON.parse(localStorage.getItem(STORAGE) || '{}'); } catch (e) {}
+    var choices = Object.assign({}, defaults, saved);
+
+    function updateSummary() {
+      document.getElementById('summary-text').textContent =
+        [choices.success, choices.fail, choices.timer, choices.ellipsis, choices.intro].join(' · ');
+    }
+
+    document.querySelectorAll('.choice').forEach(function (el) {
+      var g = el.dataset.group;
+      if (choices[g] === el.dataset.id) el.classList.add('selected');
+      el.addEventListener('click', function () {
+        document.querySelectorAll('.choice[data-group="' + g + '"]').forEach(function (c) { c.classList.remove('selected'); });
+        el.classList.add('selected');
+        choices[g] = el.dataset.id;
+        localStorage.setItem(STORAGE, JSON.stringify(choices));
+        updateSummary();
+      });
+    });
+
+    document.getElementById('theme-toggle').onclick = function () {
+      var t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', t);
+    };
+
+    if (matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.setAttribute('data-theme', 'dark');
+    updateSummary();
+  </script>
+</body>
+</html>
