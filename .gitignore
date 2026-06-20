@@ -6,3 +6,4 @@ out/_tmp/
 .wrangler/
 video/__pycache__/
 video/assets/audio/
+video/source/

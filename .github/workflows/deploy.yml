@@ -15,9 +15,16 @@ jobs:
         with:
           lfs: false
 
+      - name: Stage site (exclude 531MB OBS source)
+        run: |
+          rsync -a --exclude '.git' --exclude 'out/_tmp' --exclude '.wrangler' \
+            --exclude 'video/source' --exclude 'video/__pycache__' \
+            --exclude 'video/assets/audio' --exclude 'node_modules' \
+            ./ /tmp/tetris-pages-deploy/
+
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: b5e90be971920ce406f7b679c4f1cd33
-          command: pages deploy . --project-name=tetris --branch=main
+          command: pages deploy /tmp/tetris-pages-deploy --project-name=tetris --branch=main
